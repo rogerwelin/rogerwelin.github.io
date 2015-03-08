@@ -1,0 +1,67 @@
+---
+layout: post
+title:  "How to parse json in Golang"
+date:   2015-03-08 18:59:43
+categories: golang go json
+---
+
+Golang, from Google, is a statically-typed language with C-ish syntax. Thus if you are used to dynamically typed languages (as myself ) such as Ruby and Python it will lift some eyebrows for people when for example dealing with nested datastructures such as Json. Statically-typed languages requires you to specify the type of the datastructure in advance, which can cause some headaches when dealing with Json - you don't alwats know in advance how the Json looks like and it's very tedious to make a boilerplate struct with all the types. In Golang I found the most convinient way to dealing with this is to create a interface that you later can iterate through (but with a quite awkard case statement). Lets say the Json at the api endpoint http://www.example.com/v1/healthcheck looks like this:
+
+{% highlight json %}
+{"postgres" : {"healthy" : "true"}, "redis" : {"healthy": "true"}}
+{% endhighlight %}
+
+Below is an example program I wrote  how to make an http get, parse the json and iterate through it with the help of an interface:
+
+{% highlight go %}
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+)
+
+func handle_json_payload(url string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal("Error. Http request not successful")
+		os.Exit(1)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("Could not read data from server")
+		os.Exit(1)
+	}
+
+	var f interface{}
+
+	er := json.Unmarshal(body, &f)
+	if er != nil {
+		log.Fatal("Could not parse JSON")
+		os.Exit(1)
+	}
+
+	message := f.(map[string]interface{})
+	for k, v := range message {
+		switch vv := v.(type) {
+		case map[string]interface{}:
+			for i, u := range vv {
+				fmt.Println(k, "=>", i, ":", u)
+			}
+		}
+	}
+}
+
+func main() {
+	handle_json_payload("http://www.example.com/v1/healthcheck")
+	os.Exit(0)
+
+}
+
+{% endhighlight %}
