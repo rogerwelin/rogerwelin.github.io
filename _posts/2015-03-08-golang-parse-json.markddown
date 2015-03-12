@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title:  "How to parse json in Golang"
 date:   2015-03-08 18:59:43
 categories: golang go json
