@@ -212,6 +212,56 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
+[bob@vagrant-centos65 ~]$ rpmbuild -bb rpmbuild/SPECS/myscript.spec
+Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.EdXMOM
++ umask 022
++ cd /home/bob/rpmbuild/BUILD
++ LANG=C
++ export LANG
++ unset DISPLAY
++ cd /home/bob/rpmbuild/BUILD
++ rm -rf myscript-1.0
++ /bin/tar -xf -
++ /usr/bin/gzip -dc /home/bob/rpmbuild/SOURCES/myscript-1.0.tar.gz
++ STATUS=0
++ '[' 0 -ne 0 ']'
++ cd myscript-1.0
++ /bin/chmod -Rf a+rX,u+w,g-w,o-w .
++ exit 0
+Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.Zw4n1D
++ umask 022
++ cd /home/bob/rpmbuild/BUILD
++ '[' /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64 '!=' / ']'
++ rm -rf /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64
+++ dirname /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64
++ mkdir -p /home/bob/rpmbuild/BUILDROOT
++ mkdir /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64
++ cd myscript-1.0
++ LANG=C
++ export LANG
++ unset DISPLAY
++ rm -rf /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64
++ install -d /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64/opt/myscript
++ install myscript.sh /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64/opt/myscript/myscript.sh
++ /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
++ /usr/lib/rpm/redhat/brp-compress
++ /usr/lib/rpm/redhat/brp-strip /usr/bin/strip
++ /usr/lib/rpm/redhat/brp-strip-static-archive /usr/bin/strip
++ /usr/lib/rpm/redhat/brp-strip-comment-note /usr/bin/strip /usr/bin/objdump
++ /usr/lib/rpm/brp-python-bytecompile
++ /usr/lib/rpm/redhat/brp-python-hardlink
++ /usr/lib/rpm/redhat/brp-java-repack-jars
+Processing files: myscript-1.0-1.el6.noarch
+Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+Checking for unpackaged file(s): /usr/lib/rpm/check-files /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64
+warning: Could not canonicalize hostname: vagrant-centos65.vagrantup.com
+Wrote: /home/bob/rpmbuild/RPMS/noarch/myscript-1.0-1.el6.noarch.rpm
+Executing(%clean): /bin/sh -e /var/tmp/rpm-tmp.4pDBrn
++ umask 022
++ cd /home/bob/rpmbuild/BUILD
++ cd myscript-1.0
++ rm -rf /home/bob/rpmbuild/BUILDROOT/myscript-1.0-1.el6.x86_64
++ exit 0
 
 [root@vagrant-centos65 ~]# rpm -ivh /home/bob/rpmbuild/RPMS/noarch/myscript-1.0-1.el6.noarch.rpm
 Preparing...                ########################################### [100%]
