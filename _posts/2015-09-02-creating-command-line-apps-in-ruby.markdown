@@ -109,7 +109,7 @@ Command-line utility backing up mysql databases
 And running the program with the correct arguments:
 
 {% highlight sh %}
-nordnet@NNs-MacBook-Pro:~/Programming/ruby$ ruby mysql.rb -d one_punch -u user -p pass
+:~/Programming/ruby$ ruby mysql.rb -d one_punch -u user -p pass
 I, [2016-01-14T20:15:24.368245 #10280]  INFO -- : Command-line options accepted
 I, [2016-01-14T20:15:24.368322 #10280]  INFO -- : Start backup
 {% endhighlight %}
