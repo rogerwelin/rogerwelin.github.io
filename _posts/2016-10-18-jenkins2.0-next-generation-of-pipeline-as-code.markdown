@@ -86,11 +86,10 @@ So what is a better choice then? My firm belief is: use the global lib plugin!
 ## Global Lib Plugin / Shared Pipeline Libraries
 This [plugin](https://github.com/jenkinsci/workflow-cps-global-lib-plugin) allows you to create a shared code library repo which is stored in scm and can be used by all pipeline jobs (aka Jenkinsfile). It also enables us to not reinvent the wheel every time and keep the code DRY. Basically we can create a single big modualarized program that can handle all the logic in your organization's CD pipeline. Furthermore we have the possibility to replace all the brittle shell scripts that many of us have :facepunch:
 
-Lets take a look at setting this up:
+Let's take a look at setting this up:
 
-Define the scm url to your global library in Jenkins at:  *Manage Jenkins >> Configure System >> Global Pipeline Libraries*. Give it a name (I’ll use codemonkeyLib here) and define the scm url.
-Next set up the directories: the project uses a standard java directory structure like the example below:
-
+* Define the name and scm url to your global library in Jenkins at:  *Manage Jenkins >> Configure System >> Global Pipeline Libraries*; give it a name (I’ll use codemonkeyLib here)
+* Next set up the directories, the project uses a standard java directory structure:
 
 {% highlight bash %}
 roger@MacBook-Pro:~$ tree .
