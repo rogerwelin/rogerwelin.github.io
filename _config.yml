@@ -9,3 +9,5 @@ github_username:  rogerwelin
 # Build settings
 markdown: kramdown
 exclude: [vendor]
+gems:
+  - jemoji

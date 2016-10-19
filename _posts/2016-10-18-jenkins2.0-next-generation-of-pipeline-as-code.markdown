@@ -1,0 +1,223 @@
+---
+layout: post
+comments: true
+title:  "Jenkins 2.0 - Next Generation of Pipeline as Code"
+date:   2016-10-18 18:43:43
+categories: jenkins continuous-delivery
+---
+
+## Introduction
+I’ve recently been working with the new pipeline plugin dsl in Jenkins 2.0 and the more I work with it the more I like it - I truly believe that it’s the next generation of pipeline as code even though it has some limitations and gotchas that I will describe.
+
+
+## A brief history of pipelines and job generation in Jenkins
+Pre Jenkins 2.0 was simply put not designed for complex Continuous Delivery pipelines. What the community created with plugins such as [Build pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Build+Pipeline+Plugin) and [Delivery pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Delivery+Pipeline+Plugin) was basically a hack, sewing together separate jobs by passing parameters to them. While functionally it was basically just a big ugly hack underneath with lot of overhead.
+
+And let’s talk about the way to generate these pipelines. A common solution was to have template jobs that was used every time when creating new component pipelines. This is a maintenance nightmare, no code stored in scm, all local in Jenkins, forks of the templates occurred so you’ll end up with several template generators that have diverged from another.
+
+Enter **job dsl**! Originally created by netflix, this plugin actually gave us a way to generate jobs using a groovy dsl. That actually let us have all the job config stored as code. Here’s a simple example taken directly from the projects GitHub page:
+
+
+{% highlight groovy %}
+def gitUrl = 'git://github.com/jenkinsci/job-dsl-plugin.git' 
+
+job('PROJ-unit-tests') { 
+  scm { 
+    git(gitUrl) 
+  } triggers { 
+    scm('*/15 * * * *') 
+  } steps { 
+    maven('-e clean test') 
+  } 
+}
+{% endhighlight %}
+
+
+While this was awesome the jobs created was still translated to xml files. And it didn’t solve the headache of having several jobs tied together by passing parameters. And the job dsl programs themselves usually bloats up considerably. Many plugins are supported in job dsl but those who aren’t gave you a real headache, the solution for those was to directly manipulate the underlying xml of the Jenkins config.xml, here’s an example that I had to solve, i.e. set the sonar variable JobAdditionalProperties to the sonar publisher:
+
+
+
+{% highlight xml %}
+configure { project -> 
+	project / 
+		publishers / 
+		'org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher' / 
+		publishers / 
+		'org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher' / 
+		publisherList / 
+		'hudson.plugins.sonar.SonarPublisher' / 
+		jobAdditionalProperties(‘...') 
+}
+{% endhighlight %}
+
+This gets old… real fast! Embarrassingly it took me half a day and a stack overflow post to figure out. I still think the maintainers of the project are doing a great job so I'm not out to bash them here.
+
+## Jenkins 2.0 - Pipelines as first class citizens
+So what’s the fuzz about the pipelines in Jenkins 2.0? Well, the main improvement in Jenkins 2.0 is that pipelines are built in as first class citizens. We no longer need to create 10 different job for every component and knot them together, one job can describe the whole pipeline. This brings far less overhead. I think that the pipeline plugin expands on what job dsl plugin first achieved and goes way further.
+
+With the Jenkinsfile you can describe the whole pipeline in a groovy dsl, let’s take a look at a simplistic Jenkinsfile:
+
+
+{% highlight groovy %}
+node('master') {
+  stage('checkout and build') {
+    try {
+      checkout scm
+      env.PATH = "${tool 'Maven 3'}/bin:${env.PATH}"
+      sh 'mvn clean install'
+    } catch (e) {
+      currentBuild.result = 'FAILURE'
+      throw e
+    } finally {
+      step([$class: 'WsCleanup', cleanWhenFailure: false])
+    }
+  }
+}
+{% endhighlight %}
+
+
+Example above runs the stage on the master node, checks out code from scm and runs maven clean install. We add a try/catch/finally block which enables us to clean up the workspace only if it did not fail. This is actually pretty sweet - we both get the pipeline visualisation for free and we can define the build logic in a programmatic fashion.
+
+So how should you use the Jenkinsfile? The first obvious thought is that each dev team put a Jenkinsfile in their components repo, describing their pipeline a´la travis ci. If you're not a small organisation I don’t think this is ideal at all. Continuous Delivery pipelines tend to get complex, and the Jenkinsfile can easily swell to 500 loc or even more. Also I don’t think that dev teams should put to much focus into writing the dsl, and you still risk having the pipelines diverging and there is no code-reuse at all with this approach.
+
+So what is a better choice then? My firm belief is: use the global lib plugin!
+
+
+## Global Lib Plugin / Shared Pipeline Libraries
+This [plugin](https://github.com/jenkinsci/workflow-cps-global-lib-plugin) allows you to create a shared code library repo stored in scm that can be used by all pipeline jobs (aka Jenkinsfile), which enables us to not reinvent the wheel every time and keep the code DRY. Basically we can create a single big modualarized program that handle all the logic in your organizations CD pipeline. This let's us also say goodbye to all the brittle shell scripts that many of us have :facepunch:
+
+Lets take a look at setting this up:
+
+Define the scm url to your global library in Jenkins at:  *Manage Jenkins >> Configure System >> Global Pipeline Libraries*. Give it a name (I’ll use codemonkeyLib here) and define the scm url.
+Next set up the directories: the project uses a standard java directory structure like example below:
+
+
+{% highlight bash %}
+roger@MacBook-Pro:~$ tree .
+src
+└── org
+    └── codemonkey
+        ├── builder
+        │   ├── Gradle.groovy
+        │   └── Maven.groovy
+        ├── docker
+        │   ├── Docker.groovy
+        │   └── Kubernetes.groovy
+        ├── scm
+        │   └── Git.groovy
+        └── utilities
+            └── RestCaller.groovy
+{% endhighlight %}
+
+And a groovy class can look like this (src/codemonkey/smc/Git.groovy):
+
+{% highlight groovy %}
+class Git implements Serializable {
+  String branch
+  def stages
+
+  Git(stages) {
+    this.branch = stages.env.branch
+    this.stages = stages
+  }
+
+  def checkout() {
+    stages.echo 'checking out code from scm..'
+    //checkout scm here, ie. stages.checkout...
+  }
+}
+{% endhighlight %}
+
+
+Basically all valid Groovy code is okay except some limitations that I will describe soon. This class can be imported and used in the Jenkinsfile script like this:
+
+
+{% highlight groovy %}
+@Library('codemonkeyLib')
+import se.codemonkey.scm.Git
+
+withEnv(["branch"="master"])
+
+node('master') {
+  stage('checkout and build') {
+    def branch
+    def git = new se.codemonkey.scm.Git(this)
+    git.checkout()
+  }
+}
+{% endhighlight %}
+
+
+The *@Library* annotation we earlier defined tells Jenkins to check out this repo from scm, we can then import the classes we want and instantiate objects and run methods. Note that to be able to run dsl-specific stuff in your library classes you need to instantiate the object with the instance of the script (i.e this). We define that as stages in the constructor in the example above. This enable us to put all logic into the library classes and use the Jenkinsfile/script as a base template how the structure of the pipeline will look like. 
+
+
+## What about the job dsl plugin?
+So is the job dsl plugin totally deprecated now? Well, from my point of view no, although it will play a minor role. Let me explain: while the pipeline dsl is great we still need a way to generate new jobs and I have not found a good solution for that in the pipeline dsl. The job dsl plugin actually supports the pipeline plugin, so with a wrapper job dsl seed job we can easily create new pipeline jobs.
+
+Take the following scenario: we have a json file in scm that teams describe teams pipelines, changes in this file triggers a job-dsl seed job in Jenkins that generates new pipeline jobs. It can look like this:
+
+
+{% highlight groovy %}
+import groovy.json.JsonSlurper;
+
+class JobGenerator {
+  def static Add(job, url) {
+    job.with {
+      environmentVariables {
+        env('scm', url)
+      }
+    }
+    return job
+  }
+}
+
+def returnType(name) {
+  def result
+  switch(name) {
+    case 'springboot':
+      result = 'pipeline-types/workflow.groovy'
+    break
+    case 'tomcat':
+      result = 'pipeline-types/workflow2.groovy'
+    break
+  }
+  return result
+}
+
+def SomeThing(String project, String name, String url, String builder) {
+
+  folder("$project") {
+    displayName(project)
+  }
+
+  def type = returnType(name)
+
+  def myJob = pipelineJob("$project/$name")
+  myJob = JobGenerator.printStuff(myJob, url, builder)
+
+  myJob.with {
+    definition {
+      cps {
+        script(readFileFromWorkspace(type))
+	sandbox()
+      }
+    }
+  }
+}
+
+def InputJson = new JsonSlurper().parseText(readFileFromWorkspace("pipeline.json"))
+def Project = InputJson.project
+
+InputJson.pipelines.each { SomeThing(Project, it.name, it.url, it.builder) }
+{% endhighlight %}
+
+
+## Pipeline plugin gotchas & limitations
+Here are some things that I find bothersome and limiting with the pipeline plugin:
+
+* You cannot use each loop in the groovy classes so you are limited to the old C-style for loop
+* Developing and testing the classes can be a bit tiresome and time consuming. Push the code, run the job and so on.
+* Strange exceptions from Jenkins sometimes
+* You cannot use superclass / subclasses that passes the instance of this from the subclass constructor with super()
+* Rebuild stages are a commercial addition, so if a build fails at the end we have to rebuild from start. You can solve this by adding try/catch and retry but I really hope we can an open source implementation soon.
+
