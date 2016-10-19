@@ -89,7 +89,7 @@ This [plugin](https://github.com/jenkinsci/workflow-cps-global-lib-plugin) allow
 Let's take a look at setting this up:
 
 * Define the name and scm url to your global library in Jenkins at:  *Manage Jenkins >> Configure System >> Global Pipeline Libraries*; give it a name (I’ll use codemonkeyLib here)
-* Next set up the directories, the project uses a standard java directory structure:
+* Next set up the directories; the project should use a standard java directory structure:
 
 {% highlight bash %}
 roger@MacBook-Pro:~$ tree .
@@ -128,7 +128,7 @@ class Git implements Serializable {
 {% endhighlight %}
 
 
-Basically all valid Groovy code is accepted except some limitations that I will describe soon. This class can be imported and used in the Jenkinsfile script like this:
+Basically all valid Groovy code is accepted except some limitations that I will describe later. This class can be imported and used in the Jenkinsfile script like this:
 
 
 {% highlight groovy %}
@@ -147,13 +147,13 @@ node('master') {
 {% endhighlight %}
 
 
-The *@Library* annotation we earlier defined tells Jenkins to check out this repo from scm, we can then import the classes we want and instantiate objects and run methods. Note that to be able to run dsl-specific stuff in your library classes you need to instantiate the object with the instance of the script (i.e this). We define that as stages in the constructor in the example above. This enable us to put all logic into the library classes and use the Jenkinsfile/script as a base template how the structure of the pipeline will look like. 
+The *@Library* annotation we defined earlier tells Jenkins to check out this repo from scm. Then we can import the classes avilable and instantiate objects and run methods. Note that to be able to run dsl-specific stuff in your library classes you need to instantiate the object with the instance of the script (i.e this). We have defined that as **def stages** in the constructor in the example above. This enable us to put all logic into the library classes and use the Jenkinsfile/script as a base template on how the structure of the pipeline will look like. 
 
 
 ## What about the job dsl plugin?
-So is the job dsl plugin totally deprecated now? Well, from my point of view no, although it will play a minor role. Let me explain: while the pipeline dsl is great we still need a way to generate new jobs and I have not found a good solution for that in the pipeline dsl. The job dsl plugin actually supports the pipeline plugin, so with a wrapper job dsl seed job we can easily create new pipeline jobs.
+So is the job dsl plugin totally deprecated now? Well, from my point of view no, although it will play a minor role. Let me explain: although the pipeline dsl is great we still need a way to generate new jobs and I have not found a good solution for that in the pipeline dsl. The job dsl plugin actually supports the pipeline plugin, so with a wrapper job dsl seed job we can easily create new pipeline jobs.
 
-Take the following scenario: we have a json file in scm that teams describe teams pipelines, changes in this file triggers a job-dsl seed job in Jenkins that generates new pipeline jobs. It can look like this:
+Take the following scenario: we have a json file in scm that let teams describe their pipelines in an array, changes in this file triggers a job-dsl seed job in Jenkins that generates new pipeline jobs. It can look like this:
 
 
 {% highlight groovy %}
@@ -212,11 +212,11 @@ InputJson.pipelines.each { SomeThing(Project, it.name, it.url, it.builder) }
 
 
 ## Pipeline plugin gotchas & limitations
-Here are some things that I find bothersome and limiting with the pipeline plugin:
+Here are some things that I find bothersome and restricting with the pipeline plugin:
 
 * You cannot use each loop in the groovy classes so you are limited to the old C-style for loop
 * Developing and testing the classes can be a bit tiresome and time consuming. Push the code, run the job and so on.
 * Strange exceptions from Jenkins sometimes
 * You cannot use superclass / subclasses that passes the instance of this from the subclass constructor with super()
-* Rebuild stages are a commercial addition, so if a build fails at the end we have to rebuild from start. You can solve this by adding try/catch and retry but I really hope we can an open source implementation soon.
+* Rebuild stages are a commercial addition. If a build fails at the end, we have to rebuild it from the start. You can solve this by adding try/catch and retry but I really hope we will get an open source implementation soon.
 
