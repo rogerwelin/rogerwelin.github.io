@@ -218,5 +218,5 @@ Here are some things that I find bothersome and restricting with the pipeline pl
 * Developing and testing the classes can be a bit tiresome and time consuming. Push the code, run the job and so on.
 * Strange exceptions from Jenkins sometimes
 * You cannot use superclass / subclasses that passes the instance of this from the subclass constructor with super()
-* Rebuild stages are a commercial addition. If a build fails at the end, we have to rebuild it from the start. You can solve this by adding try/catch and retry but I really hope we will get an open source implementation soon.
+* Rebuild stages are a commercial addition. If a build fails at the end, we have to rebuild it from the start. You can solve this by adding try/catch and retry but I really hope we will get an open source implementation soon :neckbeard:
 
