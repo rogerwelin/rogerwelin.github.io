@@ -4,4 +4,4 @@ title: About
 permalink: /about/
 ---
 
-I will scribbe down some short words here later on
+I will scribbe down some short words here later on.
