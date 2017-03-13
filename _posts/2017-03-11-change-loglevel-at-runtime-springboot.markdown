@@ -48,4 +48,4 @@ curl -XPOST localhost:8080/loglevel/debug?package=se.roger
 {% endhighlight %}
 
 ## Complete Example
-If you want to try out a complete example you can check out this repo and follow the README: https://github.com/rogerwelin/springboot-change-loglevel-runtime
+If you want to try out a complete example you can check out [this repo](https://github.com/rogerwelin/springboot-change-loglevel-runtime) and follow the README.
