@@ -2,7 +2,6 @@
 layout: post
 comments: true
 title:  "Jenkins 2.0 - Next Generation of Pipeline as Code"
-toc: true
 date:   2016-10-18 18:43:43
 categories: jenkins continuous-delivery
 ---

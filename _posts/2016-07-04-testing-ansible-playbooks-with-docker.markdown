@@ -2,7 +2,6 @@
 layout: post
 comments: true
 title:  "Testing Ansible Playbooks with Docker"
-toc: true
 date:   2016-07-04 18:43:43
 categories: ansible docker
 ---
