@@ -22,7 +22,7 @@ I went with the latter options since that felt a bit easier. I found this [ruby 
 docker run -d -p 9292:9292 rogerw/markdown2confluence-server
 {% endhighlight %}
 
-* Test the conversion out the conversion (example script in ruby)
+* Test the conversion (example script in ruby)
 
 {% highlight ruby %}
 #!/usr/bin/ruby
