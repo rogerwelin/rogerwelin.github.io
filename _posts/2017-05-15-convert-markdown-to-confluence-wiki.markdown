@@ -43,5 +43,9 @@ puts response.body
 {% endhighlight %}
 
 
+## Asciicast Demo
+[![asciicast](https://asciinema.org/a/54i3clbggpayy28d0weeef572.png)](https://asciinema.org/a/54i3clbggpayy28d0weeef572)
+
+
 ## Complete Example
 If you want to check out the complete source code you can take a look at [this repo](https://github.com/rogerwelin/markdown2confluence-server) and follow the README.
