@@ -286,3 +286,6 @@ stage('Deploy to ci, test and stage environment') {
 
 The advantage here is that you can split the logic so you don't need to add a lot of logic inside the phases and add that in the generic-deploy-job instead. However the disadvantages are that this will spawn 3 jobs so you will consume 4 executors, also you will have to jump between jobs to read the logs for each deploy job.
 
+# Pipeline Shared Libraries
+Still one of the things I like best with Jenkins. Using this plugin will let you put all the common/shared stuff inside a groovy program and helps you reduce the logic needed in the Jenkinsfile. 
+However it's still a bit awkward to work with and develop, an unfortunate commit on master can mess up all the jobs that import it. It almost a must to have an indentical test Jenkins instance where you test branches on while developing new features. Another annoyance is that commits from the Shared Lib will show up in all the jobs that import it - which is very likely to cause confusion for developers owning that job. There is a [PR on github](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/pull/34) that fixed this issue but it haven't gotten any love from the maintainer :/
