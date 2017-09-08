@@ -226,7 +226,7 @@ Here are some things that I find bothersome and restricting with the pipeline pl
 This post is almost one year old now and has gotten a good number of views which I'm happy to see. There has been quite a few updates and stuff that has changed regarding Pipelines as well as my experience working with them. This update will highlight some of these things.
 
 # Declarative vs. Scripted pipeline
-Early 2017 Cloudbees announced a new way to write the Jenkinsfile which they call declarative pipeline and has since became the standard syntax in [their documentation](https://jenkins.io/doc/book/pipeline/syntax/). I don't know if this was a super good idea; while the declarative syntax is more expressive and less verbose in the scripted (groovy dsl) one it lacks the power and flexibility and adds confusing to have to separate dsl:s with different functionality.
+Early 2017 Cloudbees announced a new way to write the Jenkinsfile which they call declarative pipeline and has since became the standard syntax in [their documentation](https://jenkins.io/doc/book/pipeline/syntax/). I don't know if this was a super good idea; while the declarative syntax is more expressive and less verbose than the scripted (groovy dsl) one it lacks the power and flexibility and adds confusion to have two separate dsl:s with different functionality.
 
 # Restart a failed pipeline
 So as I described earlier in this post if a pipeline fails you do not have the ability to restart it at the failed stage, instead you need to re-run it from scratch (which is not ideal when you have a long-running and complex pipeline). I was happy too see the announcement from Cloudbees that they were planning to open source the 'Checkpoints' plugin and instantly disappointed when they withdrew from this claim, see [this jira](https://issues.jenkins-ci.org/browse/JENKINS-33846) 
@@ -254,7 +254,7 @@ stage('Deploy to ci') {
 This works but it's laborious and can be error prone, unfortunately it's the only work around I figured out so far.
 
 # Running stages/task in parallel
-The ability to run tasks in parallel has been supported for quite some time, however only inside of a stage. The pipeline visualization will still only show one stage and not several. I suppose BlueOcean fixes has a better visualization of this but it also has some drawbacks (the amount of plugins required to install BlueOcean is staggering).
+The ability to run tasks in parallel has been supported for quite some time, however only inside of a stage. The pipeline visualization will still only show one stage and not several. I suppose BlueOcean has a better visualization in this regard but it also has some drawbacks (the amount of plugins required to install BlueOcean is staggering).
 
 For running task in parallel inside of a stage using the same Jenkinsfile you can do the following (here we're running mvn clean install and npm install concurrently:
 
@@ -285,6 +285,40 @@ stage('Deploy to ci, test and stage environment') {
 {% endhighlight %}
 
 The advantage here is that you can split the logic so you don't need to add a lot of logic inside the phases and add that in the generic-deploy-job instead. However the disadvantages are that this will spawn 3 jobs so you will consume 4 executors, also you will have to jump between jobs to read the logs for each deploy job.
+
+# Manual Steps and Optional Steps
+Let's say your CI/CD workflow isn't totally automated, perhaps when the code reaches stage environment there is a manual QA process that needs to be done before the job can proceed further. In this case we can just use the input functionality before we aquire a node (the job will not consume an executor in this state). I recommend to use a timeout otherwise the job will never time out, we can achieve this like so:
+
+{% highlight groovy %}
+stage('QA sign-off') {
+  timeout(time:14, unit:'DAYS') {
+    input message: 'Confirm when ready to proceed to Release'
+  }
+  node('build') {
+    // do stuff
+  }
+}
+{% endhighlight %}
+
+In the pipeline visualization the job will be presented as paused, and if you highlight the step with the mouse you will get a pop-up with 'proceed' or 'abort' options. An optional step sort of works in a similar way but requires some ugly work around to not mess up the visualization (when adding or removing a stage the previously jobs will disappear). An optional step could be that it's optional to deploy to a certain environment or not for example. Here is my take on that:
+
+{% highlight groovy %}
+stage('Deploy to stage') {
+  timeout(time:14, unit:'DAYS') {
+    env.CHOICE=input message: 'Deploy to stage?', parameters: [choice(choices: 'YES\nNO', description: 'Chooce YES to deploy to stage. Choose NO to skip to next stage.')]
+  }
+  node('build') {
+    if ( env.CHOICE == 'NO' ) {
+      sh('echo skipping stage deploy')
+    } else {
+      sh('./deploy.sh')
+    }
+  }
+}
+{% endhighlight %}
+
+This is certainly not pretty. The reason I have the if/else statement in the node is because if the code does not reach that point it will mess up the visualization of all the previous jobs. Hopefully you won't have this requirement in the first place though.
+
 
 # Pipeline Shared Libraries
 Still one of the things I like best with Jenkins. Using this plugin will let you put all the common/shared stuff inside a groovy program and helps you reduce the logic needed in the Jenkinsfile. 
