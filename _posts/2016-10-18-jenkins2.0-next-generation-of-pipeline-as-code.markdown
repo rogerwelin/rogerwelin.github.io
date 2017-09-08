@@ -220,3 +220,69 @@ Here are some things that I find bothersome and restricting with the pipeline pl
 * You cannot use superclass / subclasses that passes the instance of this from the subclass constructor with super()
 * Rebuild stages are a commercial addition. If a build fails at the end, we have to rebuild it from the start. You can solve this by adding try/catch and retry but I really hope we will get an open source implementation soon :neckbeard:
 
+
+### UPDATE: 2017-09-08
+
+This post is almost one year old now and has gotten a good number of views which I'm happy to see. There has been quite a few updates and stuff that has changed regarding Pipelines as well as my experience working with them. This update will highlight some of these things.
+
+# Declarative vs. Scripted pipeline
+Early 2017 Cloudbees announced a new way to write the Jenkinsfile which they call declarative pipeline and has since became the standard syntax in [their documentation](https://jenkins.io/doc/book/pipeline/syntax/). I don't know if this was a super good idea; while the declarative syntax is more expressive and less verbose in the scripted (groovy dsl) one it lacks the power and flexibility and adds confusing to have to separate dsl:s with different functionality.
+
+# Restart a failed pipeline
+So as I described earlier in this post if a pipeline fails you do not have the ability to restart it at the failed stage, instead you need to re-run it from scratch (which is not ideal when you have a long-running and complex pipeline). I was happy too see the announcement from Cloudbees that they were planning to open source the 'Checkpoints' plugin and instantly disappointed when they withdrew from this claim, see [this jira](https://issues.jenkins-ci.org/browse/JENKINS-33846) 
+
+So the options we're left with are try / catch blocks with a retry around potentially flakey segments, like the following example where we let the user retry the deploy step twice before we fail the whole job:
+
+
+{% highlight groovy %}
+stage('Deploy to ci') {
+  node('build') {
+    try{
+      sh('./deploy.sh')
+    } catch (Exception e) {
+      retry(2) {
+        input "Deployment failed - retry or abort?"
+        sh('deploy.sh')
+      }
+    } finally {
+      // optional step
+    }
+  }
+}
+{% endhighlight %}
+
+This works but it's laborious and can be error prone, unfortunately it's the only work around I figured out so far.
+
+# Running stages/task in parallel
+The ability to run tasks in parallel has been supported for quite some time, however only inside of a stage. The pipeline visualization will still only show one stage and not several. I suppose BlueOcean fixes has a better visualization of this but it also has some drawbacks (the amount of plugins required to install BlueOcean is staggering).
+
+For running task in parallel inside of a stage using the same Jenkinsfile you can do the following (here we're running mvn clean install and npm install concurrently:
+
+{% highlight groovy %}
+stage('Build & compile') {
+  node('build') {
+    parallel (
+      phase1: { sh "mvn clean install" },
+      phase1: { sh "npm install" }
+    )
+  }
+}
+{% endhighlight %}
+
+The other option we have is to create another job which we call in parallel. This job could both be a freestyle job or another pipeline job which accepts arguments. Example below runs a deploy job in several environments in parallel:
+
+
+{% highlight groovy %}
+stage('Deploy to ci, test and stage environment') {
+  node('build') {
+    parallel (
+      phase1: { build job: 'generic-deploy-job', parameters: [string(name: 'environment', value: 'ci'), string(name: 'service', value: 'service-product'), string(name: 'version', value: '1.1')]},
+      phase2: { build job: 'generic-deploy-job', parameters: [string(name: 'environment', value: 'test'), string(name: 'service', value: 'service-product'), string(name: 'version', value: '1.1')]},
+      phase3: { build job: 'generic-deploy-job', parameters: [string(name: 'environment', value: 'stage'), string(name: 'service', value: 'service-product'), string(name: 'version', value: '1.1')]}
+    )
+  }
+}
+{% endhighlight %}
+
+The advantage here is that you can split the logic so you don't need to add a lot of logic inside the phases and add that in the generic-deploy-job instead. However the disadvantages are that this will spawn 3 jobs so you will consume 4 executors, also you will have to jump between jobs to read the logs for each deploy job.
+
