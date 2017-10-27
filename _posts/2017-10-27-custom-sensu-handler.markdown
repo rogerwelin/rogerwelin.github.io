@@ -3,7 +3,7 @@ layout: post
 comments: true
 title:  "Write and configure custom sensu handlers"
 date:   2017-10-27 11:43:43
-categories: markdown confluence docker
+categories: sensu monitoring
 ---
 
 ## Introduction
