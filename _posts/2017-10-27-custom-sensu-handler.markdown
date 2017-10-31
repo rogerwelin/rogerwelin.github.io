@@ -7,11 +7,11 @@ categories: sensu monitoring
 ---
 
 ## Introduction
-Sensu is a decent monitoring platform comparing to nagios, since the configuration is more flexible (more config mgmt friendly) and it's easier to scale. In this post I will demonstrate how easy it is to configure cusom handlers on checks and how to send notifications.
+Sensu is a decent monitoring platform compared to nagios, since the configuration is more flexible (and a lot more config mgmt friendly) and the platform is also easier to scale and customize. In this post I will demonstrate how easy it is to configure cusom handlers on checks and how to send notifications.
 
 ## Setting it up
-What I'mn trying to accomplish is the following:
-- checks are run standalone
+What I'm trying to accomplish is the following:
+- checks are run standalone mode
 - all checks should run a custom handler
 - notifications should be sent to my prefered chat-tool
 - notification should only be sent on state changes (eg. from OK to Critical or from Critical to OK), to avoid getting spammed.
@@ -30,7 +30,7 @@ Lets look at the configuration needed first. Handler config is only needed on se
 }
 {% endhighlight %}
 
-A pipe handler means basically that after a check is run we will also run a external command, the command will get data feed into it from STDIN (check information etc.). **Filter** is something we can apply to say when to run the handler, in this case we only want to run the handler on state changes so let's look at how to accomplish that; on the sensu-server add the following file: /etc/sensu/cond.f/state-change.only.json
+A pipe handler means basically that after a check is run we will also run an external command, the command will get data feed into it from STDIN (check information etc.). **Filter** is something we can apply to specify when to run the handler, in this case we only want to run the handler on state changes so let's look at how to accomplish that; on the sensu-server add the following file: /etc/sensu/cond.f/state-change.only.json
 
  
 {% highlight json %}
@@ -98,7 +98,7 @@ puts "response #{res.body}"
 {% endhighlight %}
 
 
-Great! So the handler script gets data from sensu from STDIN which we store in the event hash. From it we can get data such as the name of the chack, the text output and the status. Depending on the status (Critical or OK) we send a markown-table to the slack channel with different messages. Now the only thing that is left is to configure each standalone check we have to use this handler, this is configured on the sensu-clients. An example could be:
+Great! So the handler script gets data from sensu from STDIN which we store in the event hash. From it we can get data such as the name of the check, the text output and the status. Depending on the status (Critical or OK) we send a markown-table to the slack channel with different messages depending on the status. Now the only thing that is left is to configure each standalone check we have to use this handler, this is configured on the sensu-clients. An example could be:
 
 
 {% highlight json %}
