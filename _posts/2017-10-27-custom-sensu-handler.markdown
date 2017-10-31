@@ -77,9 +77,9 @@ table="
 "
 
 if check_status == 0
-  text =  "### :white_check_mark: The following sensu check has been resolved\n#{table}"
+  text =  "### The following sensu check has been resolved\n#{table}"
 else 
-  text = "### :warning: Alert from sensu\n<!channel> please review the following alert.\n#{table}"
+  text = "### Alert from sensu\n<!channel> please review the following alert.\n#{table}"
 end
 
 
