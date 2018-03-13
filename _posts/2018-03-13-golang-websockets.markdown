@@ -18,7 +18,7 @@ The quick explanation on wikipedia on websocket goes like this:
 Duplex meaning two-way communication on the same connection. Websocket still operates on TCP, though the protocol provides multiple benefits over the regular http protocol. As the server and client establish a persistent connection, we have an ideal way of pushing data to the client without having to resort to polling. It also brings significant performance benefits as we don't have the overhead of opening multiple TCP connections and we can push as many data through the connection as we want without the overhead of traditional HTTP requests.
 
 The establishment of a new websocket connection in a simplified form goes like this:
-* The client initiates the connection sending a regular HTTP request to the server (usgin the **ws://** scheme). An Upgrade heade is included in the request making the server aware that it will be a ws connection
+* The client initiates the connection sending a regular HTTP request to the server (using the **ws://** scheme). An Upgrade heade is included in the request making the server aware that it will be a ws connection
 * The server agrees (if it supports websockets) and communicates this through an Upgrade header in the response. Now the handshake is complete and the initial HTTP connection is replaced by a websocket connection
 
 ## Fetch Dependencies
