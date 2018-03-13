@@ -59,4 +59,4 @@ Save the html/js in a file and open it in Chrome or Firefox. It will only show a
 $ curl -H "Accept: application/json" -XPOST -d '{"longitude": 18.063240, "latitude": 59.334591}' localhost:8844/longlat
 {% endhighlight %}
 
-Head over to the browser and see the result. Try a couple of other curl's and see how we successfully pushes data to the client without needing to reaload the page :octocat:
+Head over to the browser and see the result. Try a couple of other curl's and see how we successfully push data to the client without needing to reaload the page :octocat:
