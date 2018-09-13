@@ -6,9 +6,9 @@ date:   2016-04-25 18:43:43
 categories: ansible
 ---
 
-## Introduction
-
 One thing that I really think is neat with Ansible is that when you need functionality that are not part of the Ansible core (let's say you need to integrate Ansible with bigip F5 load balancer) you can just turn to Python (or any other language for that matter) to write your own modules that you later can use in the regular playbooks. This is a really neat functionality, you are not tied down to the dsl (such as in the case of Puppet). DSL:s are in my experience very limited and stupid; you would rather want turn to a real general purpose programming language.
+
+<!-- more -->
 
 Here are some basic considerations of writing Ansible modules:
 

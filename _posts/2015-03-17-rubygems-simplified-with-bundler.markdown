@@ -8,6 +8,8 @@ categories: ruby gems bundler
 
 One thing with Ruby I don't quite like (and many with me) are the Ruby gems. The one thing thats great with gems is that it's almost as with CPAN, if you have a problem - there's a gem for that! But I don't like the idea of installing libraries system-wide. If installed with sudo it's a security risk. And my belief is that libraries are supposed to be used by demand when an application needs them. For example Java + maven and Node.js and NPM is a good example of those getting this right. Let's say you want to share a ruby project, the problem is  that person must have the same set of gems installed to be able to run your program, and maybe he's installing a newer version of that gem that you was testing on. Not good! Fortunately we have Bundler to help us keep track of gems and it's dependencies that solves this problem.
 
+<!-- more -->
+
 Let's create a simple ruby project where we want install a set of gems locally to that application and how we can share this project to another machine with ease. First of Bundler is a gem so we need to get that:
 
 ```

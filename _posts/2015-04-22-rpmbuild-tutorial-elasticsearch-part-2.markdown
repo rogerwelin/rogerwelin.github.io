@@ -6,8 +6,7 @@ date:   2015-04-22 22:43:43
 categories: rpm rpmbuild elasticsearch 
 ---
 
-
-**GETTING STARTED**
+<!-- more -->
 
 First let's set up our build rpm environment by installing the following:
 

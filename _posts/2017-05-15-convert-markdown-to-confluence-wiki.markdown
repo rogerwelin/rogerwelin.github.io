@@ -6,8 +6,9 @@ date:   2017-05-15 11:43:43
 categories: markdown confluence docker
 ---
 
-## Introduction
 I recently did some investigations at work on how to keep documentation up to date. I guess we've all been in the situation that the documentation we have is drifting from how the actual systems/applications look like. I believe that it's easier to keep the documentation close the the actual code, e.g by README's in markdown, than by have them as separate confluence pages that no one remembers to keep up to date. If you are using Confluence you can create/update documentation by using the REST api, however Confluence does not accept markdown so you have two options; 
+
+<!-- more -->
 
 * install markdown plugins (that's available in the api)
 * or convert markdown to confluence markup language 

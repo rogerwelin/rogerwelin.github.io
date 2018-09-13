@@ -8,6 +8,7 @@ categories: rpm rpmbuild
 
 Welcome to the first part article on how to build rpm packages. Here I will walk you through how to build a rpm package and how to work with the tools you will need. Let me just first start off with saying that I don't consider myself an expert at rpm packaging but blogging about a topic forces you to graps the subject you are writing about better. With that being said this first part will cover the bascis like installing rpm tools, the structure of a spec file, macros and lastly a simple rpm build. In part two my ambition is to take the things I wrote about here to package a real world application into an rpm.
 
+<!-- more -->
 
 **GETTING STARTED**
 

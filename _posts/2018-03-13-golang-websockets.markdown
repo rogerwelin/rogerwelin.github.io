@@ -6,9 +6,10 @@ date:   2018-03-13 19:43:43
 categories: golang websockets gorilla
 ---
 
-## Introduction
 This will be a tutorial in how to implement websockets in Go using the excellent gorilla/websocket package.
 We will build a backend server in Go that accept json from the user and pushes that data on the websocket channel; the frontend will be a simple html file with inline javascript (for simplicity sake) that connects to the go backend and listens on data and updates the html in realtime.
+
+<!-- more -->
 
 ## Brief Description of the Websocket Protocol
 The quick explanation on wikipedia on websocket goes like this:

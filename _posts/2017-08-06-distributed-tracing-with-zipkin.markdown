@@ -6,9 +6,10 @@ date:   2017-08-06 11:40:43
 categories: zipkin java tracing
 ---
 
-## Introduction
 Microservice architecture is a common architecture pattern that favors small services that's independantly deployable which communicates with each other most often with a HTTP api. 
 This architecture pattern has been very popular in our industry and is heavily favoured in opposition to build big monolithic systems that are hard to develop in cooperation and deploy. However the microservice architecture pattern does come with some downsides - it's a lot harder to understand the communication model, i.e which services is comminicating with which service. And it's a lot harder and daunting to find out exactly where in the chain latency is introduced. 
+
+<!-- more -->
 
 If these examples above are a tad bit too abstract think about the following scenarios:
 

@@ -6,9 +6,9 @@ date:   2017-03-11 12:43:43
 categories: java springboot logback
 ---
 
-## Introduction
 Both devs and ops care a lot about logging. For devs it gives them a way to peek into the behaviour of the application once it's running and way to debug, and for ops it's the first thing they go to for troubleshooting incidents in production. Because logging is such an important troubleshooting source it's really important that we can change logelvel on the fly when the default loglevel aren't showing us enough information. Unfortunaltey, from my experience, this is something we're really bad at - I can remember numerous occasions where we had to disable the node from the loadbalancer, change the loglevel, then restart the application, enable the node in the loadbalancer and repeat this dance for the x number of nodes. Turns out it's super simple to implement changing loglvel at runtime.
 
+<!-- more -->
 
 ## Example Using Springboot and Logback
 The title of this post is a tad misleading - there's really no magic springboot magic involved here. We're just accessing logbacks LoggerContext to set a new loglevel and putting a rest endpoint as a way to expose that. In the example below we're defined the method **loglevel** where we're getting the user input and the method **setLogLevel** is doing the actual work using the LoggerContext to set a new loglevel:

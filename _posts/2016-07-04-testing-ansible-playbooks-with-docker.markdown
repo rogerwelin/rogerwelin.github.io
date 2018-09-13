@@ -6,9 +6,9 @@ date:   2016-07-04 18:43:43
 categories: ansible docker
 ---
 
-## Introduction
-
 As long as I have been working with configuration management tools (puppet & ansible) there hasn't really been a good way to test the units you've been written. Up until recently my experience has been something like this: working on a feature on the master branch, in best case someone will lend their eyes to look at the changes, run changes directly on the target environment and hope everything works without spewing errors. Except being an embarrasing workflow this imposes a risk; there's no way of knowing that your changes won't set the target environment on fire and either way testing in production (or any other target environment for that matter) is unacceptable!
+
+<!-- more -->
 
 Operations have come a long way to embrace good software developer practices, so there should be a way for us to embrace this regarding writing and testing playbooks/modules/cookbooks as well. What I have in mind is hardly revolutionary (basically just a feedback-loop):
 

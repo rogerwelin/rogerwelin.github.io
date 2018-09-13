@@ -6,11 +6,11 @@ date:   2016-10-18 18:43:43
 categories: jenkins continuous-delivery
 ---
 
-## Introduction
-I’ve recently been working with the new pipeline plugin dsl in Jenkins 2.0 and the more I work with it the more I like it - I truly believe that it’s the next generation of pipeline as code even though it has some limitations and gotchas that I will describe.
+I’ve recently been working with the new pipeline plugin dsl in Jenkins 2.0 and the more I work with it the more I like it - I truly believe that it’s the next generation of pipeline as code even though it has several limitations and gotchas that I will describe. 
 
+<!-- more -->
 
-## A brief history of pipelines and job generation in Jenkins
+### A brief history of pipelines and job generation in Jenkins
 Pre Jenkins 2.0 was simply not designed for complex Continuous Delivery pipelines. What the community created with plugins such as [Build pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Build+Pipeline+Plugin) and [Delivery pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Delivery+Pipeline+Plugin) was basically a hack, sewing together separate jobs by passing parameters to them. While functionally it was basically just a big ugly hack underneath with lots of overhead.
 
 And let’s talk about the way to generate these pipelines. A common solution was to have template jobs that were used every time when creating new component pipelines. This is a maintenance nightmare; no code stored in scm, all local in Jenkins, forks of the templates occurred so you’ll end up with several template generators that have diverged from another.

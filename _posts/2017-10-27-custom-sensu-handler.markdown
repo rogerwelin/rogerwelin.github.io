@@ -6,8 +6,9 @@ date:   2017-10-27 11:43:43
 categories: sensu monitoring
 ---
 
-## Introduction
-Sensu is a decent monitoring platform compared to nagios, since the configuration is more flexible (and a lot more config mgmt friendly) and the platform is also easier to scale and customize. In this post I will demonstrate how easy it is to configure cusom handlers on checks and how to send notifications.
+Sensu is a decent monitoring platform compared to nagios, since the configuration is more flexible (and a lot more config mgmt friendly) and the platform is also easier to scale and customize. In this post I will demonstrate how easy it is to configure cusom handlers on checks and how to send notifications to a chat.
+
+<!-- more -->
 
 ## Setting it up
 What I'm trying to accomplish is the following:

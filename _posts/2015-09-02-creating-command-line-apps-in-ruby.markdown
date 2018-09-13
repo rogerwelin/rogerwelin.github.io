@@ -6,13 +6,14 @@ date:   2016-01-14 20:43:43
 categories: ruby
 ---
 
-## Introduction
-
 So what makes a good and helpful command line application? I think these three point are important:
 
 * easy to use
 * helpful
 * play well with others
+
+
+<!-- more -->
 
 Bash is commonly used to write command line apps, but I can never shrug of the feeling of shame of writing a bash script with more than 30 lines.
 That's why I'm shaking things up here and showing how to use ruby instead. I'll be using the optparse gem so you need to do a ```gem install optparse```
