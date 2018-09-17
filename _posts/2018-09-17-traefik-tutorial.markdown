@@ -122,7 +122,7 @@ HTTP/1.1 200 OK
 ...
 ```
 
-It worked, great success!
+It worked, great success! :racehorse:
 
 ## **Conclusion**
 This post barely scratched the surface, head over to the official documentation to learn more about supported backends, tracing and configuration options; but this information should give you a rough idea how traefik works.
