@@ -2,7 +2,7 @@
 layout: post
 comments: true
 title:  "Traefik tutorial - dynamic routing for microservices"
-date:   2018-03-17 19:43:43
+date:   2018-09-17 19:43:43
 categories: traefik reverse proxy micro services
 ---
 

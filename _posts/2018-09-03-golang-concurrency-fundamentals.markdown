@@ -2,7 +2,7 @@
 layout: post
 comments: true
 title:  "Concurrency in Go - Fundamentals"
-date:   2018-03-13 19:43:43
+date:   2018-09-04 19:43:43
 categories: golang go concurrency 
 ---
 
