@@ -16,6 +16,7 @@ In this post we will talk about:
 * WaitGroup:s (from the **sync** package)
 * channels (buffered & unbuffered)
 
+There's definitely a lot more important subjects to cover but these are the basics that are important to grasp.
 
 ## Concurrency in Go
 Without going into too much theory I would say that goroutines are at the core of concurrency in Go. Goroutines are user-space threads which are similar to kernel threads managed by the OS but instead managed entirely by the Go runtime. The reason for this is that user-space threads managed by the Go runtime are lighter-weight and cheaper than kernel threads. Also smaller memory footprint: initial goroutine stack = 2kb, default thread stack = 8kb
@@ -126,5 +127,42 @@ Ouch! We can fix this issue using something called *channels* which brings us to
 
 
 ## Using Channels
+You can think of channels as concurrency safe containers, you associate any type of data type with them (int, string, map, struct and so on).
+Channels are ideal when you want to communicate information between goroutines. This is how you declare a channel that will hold string
 
-WIP...
+{% highlight go %}
+stream = make(chan string)
+{% endhighlight %}
+
+You can define if the channel can only read or only write using the arrow character:
+
+{% highlight go %}
+stream = make(chan string)
+
+// channel can only read
+stream = make(chan<- string)
+
+// channel can only send
+stream = make(chan-> string)
+{% endhighlight %}
+
+
+Channel comes in two flavors:
+
+* buffered channels
+* unbuffered channels
+
+Unbuffered channels are declared without a size (as example above) while buffered channels are declared with a fixed size, like so:
+
+{% highlight go %}
+// buffered channel of strings buffering up to 2 values
+stream = make(chan string, 2)
+{% endhighlight %}
+
+The difference initially seems trivial but there is a important implication in how they operate;
+- buffered blocks if there are not ..
+- unbuffered blocks if there are not ...
+
+WIP
+
+
