@@ -16,7 +16,7 @@ In this post we will talk about:
 * WaitGroup:s (from the **sync** package)
 * channels (buffered & unbuffered)
 
-There's definitely a lot more important subjects to cover but these are the basics that are important to grasp.
+There's definitely a lot more important subjects to cover but these are the basics that are vital to grasp.
 
 ## Concurrency in Go
 Without going into too much theory I would say that goroutines are at the core of concurrency in Go. Goroutines are user-space threads which are similar to kernel threads managed by the OS but instead managed entirely by the Go runtime. The reason for this is that user-space threads managed by the Go runtime are lighter-weight and cheaper than kernel threads. Also smaller memory footprint: initial goroutine stack = 2kb, default thread stack = 8kb
@@ -104,7 +104,7 @@ Examples up to this point has been very hello world-ish so let's make a program 
 
 This looks pretty straight forward, ..... But actually there's a problem with this implementation which brings us to another concurrency gotcha; this code introduces a data race.
 
-#### **Concurrency Gotcha #2**
+#### **Concurrency Gotcha #2 - data race**
 So what's a data race? A data race occurs when two or more goroutines access the same variable concurrently and at least one of the accesses is a write, this could lead to memory corruptions and crashes. It also makes the code unpredictable and hard to debug (potentially we can get different results each time the code is run).
 
 But why did we get a data race? Simply put; maps are not thread-safe! To verify this we can use the built-in tool *-race* to test our code:
@@ -127,7 +127,7 @@ Ouch! We can fix this issue using something called *channels* which brings us to
 
 
 ## Using Channels
-You can think of channels as concurrency safe containers, you associate any type of data type with them (int, string, map, struct and so on).
+You can think of channels as concurrency safe containers, you associate any data type with them (int, string, map, struct and so on).
 Channels are ideal when you want to communicate information between goroutines. This is how you declare a channel that will hold string
 
 {% highlight go %}
@@ -137,6 +137,7 @@ stream = make(chan string)
 You can define if the channel can only read or only write using the arrow character:
 
 {% highlight go %}
+// channel can both send and receive
 stream = make(chan string)
 
 // channel can only read
@@ -160,9 +161,67 @@ stream = make(chan string, 2)
 {% endhighlight %}
 
 The difference initially seems trivial but there is a important implication in how they operate;
-- buffered blocks if there are not ..
-- unbuffered blocks if there are not ...
+*  **unbuffered channel**: a send operation on an unbuffered channel blocks the sending goroutine until another goroutine executes a receive on the same channel, now both goroutines may continue
+* **unbuffered channel**: if the receive operation was triggered first, the receiving goroutine is blocked until another goroutine performs a send on the same channel
+* **buffered channel**: send operation inserts element in the buffer/queue while a receive operation removes the element from the channel. If the channel is at maximum capacity the send operation blocks until space is "freed" by another goroutine's receive.
+* **buffered channel**: if the buffer/queue is empty a receive oepration blocks until a value is sent by another goroutine
+
+Let's try to visualize these differences with some code examples:
+
+From what we've just learned on an *unbuffered channel* we should do the send and receive operation in different goroutines to avoid a deadlock, below is a simple demonstration of how to do this:
+
+{% highlight go %}
+func main() {
+      message := make(chan string)
+ 
+      // we need to execute the send operation in a separate goroutine
+      // as it would otherwise block the main goroutine 
+      go func() {
+          message <- "ping"
+      }()
+          
+      // execution blocks here until we receive something on channel message
+      msg := <-message
+      fmt.Println(msg)
+}
+{% endhighlight %}
 
 WIP
 
+*Buffered channel* does not block except when the channel is full, so we can do the send and receive operation in the same goroutine. However this example sends 3 elements on a channel with capacity of 2, thus our program will result in an deadlock:
 
+{% highlight go %}
+func main() {
+    // channel with capacity of 2
+    message := make(chan string, 2)
+    
+    message <- "ping 1"
+    message <- "ping 2"
+    // at third element our channel is full thus our
+    // program will block here and terminate the program with an deadlock error
+    message <- "ping 3"
+              
+    fmt.Println(<-message)
+    fmt.Println(<-message)
+    fmt.Println(<-message)
+}
+{% endhighlight %}
+
+To make this code work we must unblock send operation from another goroutine, in the example below we do the send operation in a separate goroutine, it will block at element 3, but because the receive operation executes in a another goroutine the code will unblock:
+
+{% highlight go %}
+func main() {
+    // channel with capacity of 2
+    message := make(chan string, 2)
+    
+    go func() {
+        message <- "ping 1"
+        message <- "ping 2"
+        message <- "ping 3"
+    }()
+              
+    fmt.Println(<-message)
+    fmt.Println(<-message)
+    fmt.Println(<-message)
+}
+{% endhighlight %}
