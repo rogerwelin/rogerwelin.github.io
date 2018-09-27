@@ -14,6 +14,7 @@ In this post we will talk about:
 * brief discussion of Go's concurrency features
 * goroutines
 * WaitGroup:s (from the **sync** package)
+* Mutex (also from **sync** package)
 * channels (buffered & unbuffered)
 
 There's definitely a lot more important subjects to cover but these are the basics that are vital to grasp.
@@ -123,8 +124,34 @@ Found 1 data race(s)
 exit status 66
 ```
 
-Ouch! We can fix this issue using something called *channels* which brings us to the next section in this tutorial.
+Ouch! There are several ways we can fix this, for example with *channels* which I will cover shortly. Another way to fix this would be if we could protect our map but still run things concurrently; for this we use something called *mutex*
 
+## Mutex
+If you have a background in C/C++ mutex are probably familiar to you and they are similarly implemented in Go.
+Mutex stands for "mutual exclusion" and is a way to guard critical sections in your code from concurrent operations.
+To fix our data race from previous example we just need to put Lock() before the map operation and then Unlock() after the map operation has completed. Example below:
+
+{% highlight go %}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	for _, url := range urls {
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Errorf("url was error: %v", err)
+			}
+			mu.Lock()
+			respStatus[url] = resp.StatusCode
+			mu.Unlock()
+		}(url)
+	}
+	wg.Wait()
+{% endhighlight %}
+
+Try to run this program with  ```go run -race main.go``` and you will see that the data race warnings are gone!
 
 ## Using Channels
 You can think of channels as concurrency safe containers, you associate any data type with them (int, string, map, struct and so on).
@@ -185,8 +212,6 @@ func main() {
       fmt.Println(msg)
 }
 {% endhighlight %}
-
-WIP
 
 *Buffered channel* does not block except when the channel is full, so we can do the send and receive operation in the same goroutine. However this example sends 3 elements on a channel with capacity of 2, thus our program will result in an deadlock:
 

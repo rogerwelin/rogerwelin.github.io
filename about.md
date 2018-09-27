@@ -4,4 +4,5 @@ title: About
 permalink: /about/
 ---
 
-I will scribbe down some short words here later on.
+Devops/infrastructure engineer, gopher, blogger, automation wizard, tool builder, open source enthusiast.
+
