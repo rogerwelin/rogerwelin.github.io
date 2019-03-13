@@ -232,6 +232,21 @@ func main() {
 }
 {% endhighlight %}
 
+This brings us to another concurrency gotcha: a deadlock!
+
+#### **Concurrency Gotcha #3 - deadlock**
+A deadlock manifests itself when a program with concurrent processes are waiting one one another. In this state, the program will never recover. The Go compiler will notice this error on compiletime and will give us a warning and refuse to compile the program. Trying to run this program above will result in the following error:
+
+```bash
+$ go run main.go
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+	.../main.go:13 +0x9b
+exit status 2
+```
+
 To make this code work we must unblock send operation from another goroutine, in the example below we do the send operation in a separate goroutine, it will block at element 3, but because the receive operation executes in a another goroutine the code will unblock:
 
 {% highlight go %}
@@ -250,3 +265,9 @@ func main() {
     fmt.Println(<-message)
 }
 {% endhighlight %}
+
+Given what we learned so far of channel, let's try to fix our concurrent urlfetcher program using only channels.
+
+**in progress**
+
+
