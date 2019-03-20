@@ -76,7 +76,7 @@ The *main.tf* file are not terrible exciting since it just basically creates two
 
 ````bash
 $ terraform init
-$ terraform approve -auto-approve
+$ terraform apply -auto-approve
 ```
 
 If everything went well; good job, we are ready to move on! If not examine the error message outputted by Terraform. Most likely it will say that the bucket name is already taken, in that case just change the name again in the *vars.tf* file and retry.
