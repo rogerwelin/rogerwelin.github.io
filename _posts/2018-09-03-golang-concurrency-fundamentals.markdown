@@ -266,6 +266,31 @@ func main() {
 }
 {% endhighlight %}
 
+#### **Closing Channels**
+A channel is not a resource like a file or tcp connection that needs to be closed after use to free up resources, they can be left open infinitely. However we have the choice of closing them. Doing so indicates that no more value will be sent on the channel. This is useful if we want to avoid a deadlock and move on with our execution logic or communicate with other channels to return.
+
+A contrived but telling example is shown below. Here we create a buffered channel of type *person*, after writing to the channel we just want to iterate over the message without receiving from it. In normal cases this would result in a deadlock but since we closed the channel we've indicated that no more values can be sent to the channel. 
+
+{% highlight go %}
+type person struct {
+	Name string
+	Age  int
+}
+
+func main() {
+	message := make(chan person, 3)
+	message <- person{Name: "ping 1", Age: 1}
+	message <- person{Name: "ping 2", Age: 2}
+
+	close(message)
+
+	for element := range message {
+		fmt.Printf("Age plus one is: %d\n", element.Age+1)
+	}
+}
+{% endhighlight %}
+
+
 Given what we learned so far of channel, let's try to fix our concurrent urlfetcher program using only channels.
 
 **in progress**
