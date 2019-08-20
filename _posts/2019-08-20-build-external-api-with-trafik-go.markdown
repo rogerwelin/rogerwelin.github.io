@@ -38,7 +38,7 @@ $ sudo ./traefik -c traefik.toml &
 $ go run server.go
 ```
 
-Now we are going to register our auth/api service to Consul, save the json blog below into a file called service.json:
+Now we are going to register our auth/api service to Consul, save the json blob below into a file called service.json:
 
 {% gist 71bb4416ff06ad1f5accf6f8f3edaf86 %}
 
