@@ -55,7 +55,6 @@ $ curl -i \
 > http://127.0.0.1:8500/v1/agent/service/register
 HTTP/1.1 200 OK
 Vary: Accept-Encoding
-Date: Mon, 17 Sep 2018 22:28:00 GMT
 Content-Length: 0
 ```
 
