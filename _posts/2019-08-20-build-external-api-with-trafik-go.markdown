@@ -34,7 +34,7 @@ With the api/auth server done, we can start firing up Traefik, Consul and our ap
 
 ````bash
 $ docker run -d -p 8500:8500 consul:1.5.1
-$ sudo ./traefik -c traefik.toml &
+$ ./traefik -c traefik.toml &
 $ go run server.go
 ```
 
