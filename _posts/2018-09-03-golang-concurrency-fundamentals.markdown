@@ -291,7 +291,16 @@ func main() {
 {% endhighlight %}
 
 
-Given what we learned so far of channel, let's try to fix our concurrent urlfetcher program using only channels.
+Given what we learned so far of channel, let's try to rewrite our concurrent urlfetcher program to using channels instead of mutex/shared memory. An example program is outlined below, I'll explain the flow based on the comments:
+
+1. We'll create a unbuffered channel which we'll send and receive messages to
+2. We starts the receiving of the channel in a goroutine, since sending without a receiver would block (eg. deadlock)
+3. We loop each element in the url slice and starts a new goroutine for each one, making all http get:s concurrently
+4. The makeRequest function performs the http get and sends it's results to the receiver function
+5. The collect function prints the result of the HttpResult struct when messages are sent to the channel
+6. Finally we'll move on when all urls are processed with the help of a WaitGroup
+
+Notice here that the sender function and the receiver function are totally decoupled, they are using the urlChan channel to communicate, not by sharing memory
 
 
 {% highlight go %}
@@ -308,7 +317,7 @@ type HttpResult struct {
 	StatusCode int
 }
 
-// channel can only send
+// 4
 func makeRequest(ch chan<- HttpResult, url string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	resp, err := http.Get(url)
@@ -318,7 +327,7 @@ func makeRequest(ch chan<- HttpResult, url string, wg *sync.WaitGroup) {
 	ch <- HttpResult{Url: url, StatusCode: resp.StatusCode}
 }
 
-// channel can only read
+// 5
 func collect(ch <-chan HttpResult) {
 	for msg := range ch {
 		fmt.Printf("%s -> %d\n", msg.Url, msg.StatusCode)
@@ -326,6 +335,7 @@ func collect(ch <-chan HttpResult) {
 }
 
 func main() {
+        // 1
 	urlChan := make(chan HttpResult)
 	var wg sync.WaitGroup
 
@@ -334,14 +344,16 @@ func main() {
 		"https://news.ycombinator.com/",
 		"https://www.google.se/shouldbe404",
 		"https://www.cpan.org/"}
-
+        // 2
 	go collect(urlChan)
 
+        // 3
 	for _, url := range urls {
 		wg.Add(1)
 		go makeRequest(urlChan, url, &wg)
 	}
 
+       // 6
 	wg.Wait()
 	close(urlChan)
 }
