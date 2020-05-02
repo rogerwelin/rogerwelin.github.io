@@ -294,7 +294,7 @@ func main() {
 Given what we learned so far of channel, let's try to rewrite our concurrent urlfetcher program to using channels instead of mutex/shared memory. An example program is outlined below, I'll explain the flow based on the comments:
 
 1. We'll create a unbuffered channel which we'll send and receive messages to
-2. We starts the receiving of the channel in a goroutine, since sending without a receiver would block (eg. deadlock)
+2. We starts the receiving of the channel in a goroutine, since sending without a receiver would block (eg. hang indefinitely)
 3. We loop each element in the url slice and starts a new goroutine for each one, making all http get:s concurrently
 4. The makeRequest function performs the http get and sends it's results to the receiver function
 5. The collect function prints the result of the HttpResult struct when messages are sent to the channel
@@ -359,8 +359,8 @@ func main() {
 }
 {% endhighlight %}
 
-**in progress**
 
+## When to use Channels vs Shared Memory
 
 
 
