@@ -13,22 +13,21 @@ Welcome to part 2 of how to build a serverless website from scratch using AWS, T
 <!-- more -->
 
 ### **Improving the System Design**  
-The imaginative scenario for our weather site is as follows: our website has gained an unprecedented amount of popularity all over the internet and the traffic has spiked to millions of users each day. The architecture from part 1 seemed fine for a small hobby site but with the amount of traffic the design clearly is ...... Each time a user request weather information triggers a lambda execution which queries the remote weather api. With millions of users each day, the AWS bill racks up (as AWS pays per lambda execution, time and memory). Another aspect is that the remote weather api service will probably blacklist us as we are basically spamming them with requests. 
+The imaginative scenario for our weather site is as follows: our website has gained an unprecedented amount of popularity all over the internet and the traffic has spiked to millions of users each day. The architecture from part 1 seemed fine for a small hobby site but with the amount of traffic the design clearly needs improvement to handle the traffic spike. Each time a user request weather information will trigger a lambda execution which queries the remote weather api. With millions of users each day, the AWS bill racks up (as AWS pays per lambda execution, time and memory). Another aspect is that the remote weather api service will probably blacklist us as we are basically spamming them with requests. 
 
 So we need to rethink how we design this sytem:  
-* Do we really need to execute a lambda for each time a user wants to view the weather status? In this case I would say no. Weather status is hardly a realtime problem. If we cache the data for, let's say, 20-30 minutes our users would hardly notice
-* How to do the caching? API Gateway are able to cache the results for an endpoint for a specified amount of time. This sounds promising, we can thus reduce the load on our lambda and the remote data source.
-* Can we do better? Instead of caching in API Gateway we can put the entire workload on the client. This has a lot of benefits; less load on our cloud resources and we can remove the complex API layer
-* How to improve response times for our global users? As our website bucket is located in the US, users from Asia and Europe will experience slow response times (due to higher RTT, TCP/TLS setup). We should definitely improve this. To accomplish this we should use Cloudfront to cache our entire website. Since we no longer have any dynamic content Cloudfront can cache the whole site close to the user.
+* Do we really need to execute a lambda for each time a user wants to view the weather status? In this case I would say no. Weather status is hardly a realtime problem. If we cache the data for, let's say, 20-30 minutes our users would hardly notice. Thus we can easily "cache" the results
+* How to do the caching? API Gateway are able to cache the results for an endpoint for a specified amount of time. This sounds promising, we can thus reduce the load on our lambda and the remote data source. We could also put Cloudfront as a CDN in front and integrate it to the API Gateway
+* Can we do better? Instead of caching in API Gateway we can put the entire workload on the client; meaning a totally static site. This has a lot of benefits; less load on our cloud resources and we can remove the complex API Gateway layer.
+* How do we improve response times for our global users? As our website bucket is located in the US, users from Asia and Europe will experience slow response times (due to higher RTT, TCP/TLS setup). We should definitely improve this. To accomplish this we should use Cloudfront as a CDN to cache our entire website. Since we no longer have any dynamic content Cloudfront can cache the whole site with data close to the user. When we get new data we can just invalidate the Cloudfront cache
 
-### **The new Design**  
+### The new Design  
 To quickly re-cap what we will refactor and implement:
-* We will scrap API Gateway and re-write our lambda to run as cron/batch. It will assemble a json file with the current weather data. The json file will be stored in the website S3 bucket. We will thus put all work on the client and since we don't need to talk to the server-side anymore will boost performance
+* We will scrap API Gateway and re-write our lambda to run at a schedule (cron) using Cloudwatch Events. It will assemble a json file with the current weather data. The json file will be stored in the website S3 bucket. We will thus put all work on the client and since we don't need to talk to the server-side anymore will boost performance
 * We will have to rewrite parts of our frontend as we no longer need to invoke a lambda
 * We will setup Cloudfront to cache our entire website to serve content as close as possible to the user
 
-
-### Preparation
+### Preparation  
 
 As with part 1 we will clone a github repo containing all code and terraform config, this time also checkout a branch where the above changes are implemented.
 
@@ -54,5 +53,11 @@ Lets take a look at the code below (or navigate to the faas/ folder), important 
 
 {% gist 4ec6d4f59390fdc32d67f492e5a9e530 %}
 
+**Compile the Go function**  
+The Go program uses go mod (which will take care of all the aws dependencies) so we only need to build it and upload to our S3 bucket:
 
-
+````bash
+$ GOOS=linux go build -o faas
+$ zip faas.zip faas
+$ aws s3 cp faas.zip s3://{my-artifact-s3-bucket-url}/
+```

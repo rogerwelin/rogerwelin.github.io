@@ -91,7 +91,7 @@ Lets take a look at the code below (or navigate to the *faas/* folder), importan
 {% gist 1bcc1a5e9a894d592d3113970de0cea7 %}
 
 **Compiling the project**    
-We will now comple the function, compress it to a zip file (zip is the format Lambda expects) and upload it to our S3 artifact bucket created in previous step:
+We will now compile the function, compress it to a zip file (zip is the format Lambda expects) and upload it to our S3 artifact bucket created in previous step:
 
 ````bash
 $ go get github.com/aws/aws-lambda-go/lambda
