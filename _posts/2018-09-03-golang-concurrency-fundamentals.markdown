@@ -293,20 +293,22 @@ func main() {
 
 Given what we learned so far of channel, let's try to rewrite our concurrent urlfetcher program to using channels instead of mutex/shared memory. An example program is outlined below, I'll explain the flow based on the comments:
 
-1. We'll create a unbuffered channel which we'll send and receive messages to
-2. We starts the receiving of the channel in a goroutine, since sending without a receiver would block (eg. hang indefinitely)
-3. We loop each element in the url slice and starts a new goroutine for each one, making all http get:s concurrently
-4. The makeRequest function performs the http get and sends it's results to the receiver function
-5. The collect function prints the result of the HttpResult struct when messages are sent to the channel
-6. Finally we'll move on when all urls are processed with the help of a WaitGroup
+1. We create 2 channels and a WaitGroup. The WaitGroup is used to wait for producer goroutines to finish
+2. We loop each element in the url slice and starts a new producer goroutine for each one, making all http get:s concurrently
+4. The producer goroutine makes the http request and produces jobs for the consume goroutine
+5. The consumer goroutine collects all results
+6. Here we wait for the producer goroutines to finish, then we close the channel. Last we send done to signal to the consumer goroutine to end
 
-Notice here that the sender function and the receiver function are totally decoupled, they are using the urlChan channel to communicate, not by sharing memory
+Notice here that the producer function and the consumer functions are totally decoupled, they are using the urlChan channel to communicate, not by sharing memory. This pattern shown above are called Producer-Consumer pattern (in this case; multiple producers and one consumer)
 
 
-{% gist dbd917bc9485386d82691429069acef9 %}
+{% gist 8edc88baa73985a02a2e2a989db180f8 %}
 
 
 ## When to use Channels vs Shared Memory
+
+
+
 
 
 
