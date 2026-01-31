@@ -1,4 +1,7 @@
-_site
-.sass-cache
-vendor
-.bundle
+# Hugo build artifacts
+public/
+resources/
+.hugo_build.lock
+
+# OS files
+.DS_Store

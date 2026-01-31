@@ -1,0 +1,96 @@
+baseURL = 'https://rogerwelin.github.io/'
+languageCode = 'en-us'
+title = 'Roger Welin'
+theme = 'PaperMod'
+
+[params]
+  description = "A tech blog where I will post blog posts about Devops, programming, interesting technologies or just various tips and trix"
+  author = "Roger Welin"
+  email = "roger.welin@icloud.com"
+
+  # Favicon settings - only use favicon.ico
+  [params.assets]
+    favicon = "favicon.ico"
+    favicon16x16 = "favicon.ico"
+    favicon32x32 = "favicon.ico"
+    apple_touch_icon = "favicon.ico"
+
+  # PaperMod settings
+  ShowReadingTime = true
+  ShowShareButtons = false
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  ShowWordCount = true
+  ShowRssButtonInSectionTermList = true
+  UseHugoToc = true
+  disableSpecial1stPost = false
+  disableScrollToTop = false
+  comments = false
+  hidemeta = false
+  hideSummary = false
+  showtoc = false
+  tocopen = false
+
+  [params.homeInfoParams]
+    Title = "Roger Welin"
+    Content = "A tech blog about Devops, programming, interesting technologies and various tips and tricks"
+
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/rogerwelin"
+
+  [[params.socialIcons]]
+    name = "email"
+    url = "mailto:roger.welin@icloud.com"
+
+  [[params.socialIcons]]
+    name = "rss"
+    url = "/feed.xml"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true  # Allow raw HTML in markdown
+  [markup.goldmark.parser]
+    [markup.goldmark.parser.attribute]
+      block = true
+      title = true
+  [markup.highlight]
+    style = 'github-dark'
+    lineNos = false
+    lineNumbersInTable = false
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = false
+    noClasses = true
+
+[permalinks]
+  posts = '/:year/:month/:day/:slug/'
+
+[menu]
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 10
+
+[outputs]
+  home = ['HTML', 'RSS', 'JSON']
+  section = ['HTML']
+
+[outputFormats]
+  [outputFormats.RSS]
+    mediaType = "application/rss+xml"
+    baseName = "feed"
+
+# Enable emoji support
+enableEmoji = true
+
+# Build options
+[build]
+  writeStats = false
+
+# Pagination
+[pagination]
+  pagerSize = 6
