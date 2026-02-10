@@ -1,0 +1,58 @@
+/* Callout box styling */
+.callout {
+  display: flex;
+  gap: 1rem;
+  background: #0d1117;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border-left: 4px solid #58a6ff;
+}
+
+.callout-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.callout-content {
+  flex: 1;
+}
+
+.callout-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #58a6ff;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.callout-body {
+  color: #f5f5f5;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.callout-body em {
+  color: #fff;
+  font-style: italic;
+}
+
+/* Light theme adjustments */
+.light .callout {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left-color: #0066cc;
+}
+
+.light .callout-title {
+  color: #0066cc;
+}
+
+.light .callout-body {
+  color: #333;
+}
+
+.light .callout-body em {
+  color: #000;
+}

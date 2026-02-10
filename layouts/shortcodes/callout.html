@@ -1,0 +1,7 @@
+<div class="callout">
+  <div class="callout-icon">{{ .Get "icon" | default "💡" }}</div>
+  <div class="callout-content">
+    <div class="callout-title">{{ .Get "title" | default "Key takeaway" }}</div>
+    <div class="callout-body">{{ .Inner | markdownify }}</div>
+  </div>
+</div>

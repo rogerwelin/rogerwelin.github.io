@@ -10,9 +10,14 @@ title = 'Postgres Bloat'
 
 Your PostgreSQL database keeps growing, even though the number of rows stays roughly the same. Disk usage climbs, queries slow down, and you wonder what the heck is happening.
 
-It’s not a bug - it’s called bloat and it's baked into the core design of Postgres.
+It's not a bug - it's called bloat and it's baked into the core design of Postgres.
 
-To understand why it happens we have to follow the lifecycle of a row from the moment it’s written to a physical file to the moment it becomes "dead" space. This journey begins at the physical storage layer: **Pages and Tuples**.
+To understand why it happens we have to follow the lifecycle of a row from the moment it's written to a physical file to the moment it becomes "dead" space. This journey begins at the physical storage layer: **Pages and Tuples**.
+
+**Table of Contents**
+1. [The Physical Layer: Pages and Tuples](#1-the-physical-layer-pages-and-tuples)
+2. [MVCC and Why Old Data Sticks Around](#2-mvcc-and-why-old-data-sticks-around)
+3. [VACUUM](#3-vacuum)
 
 ### 1. The Physical Layer: Pages and Tuples
 Postgres stores tables as files on disk, divided into fixed-size **pages** (8 KB blocks). Inside each page are **tuples** - the physical versions of your rows. See below for a diagram of a Page:
@@ -29,7 +34,9 @@ This page-based architecture has critical implications for how bloat develops:
 
 **Multiple versions coexist**. A single logical row in your application may correspond to several physical tuples spread across different pages. Each UPDATE creates a new tuple in a potentially different page, while the old tuple remains on disk.
 
-Here's the key insight: your disk usage is driven by the total number of tuple versions, not the number of rows you can query. A table with 1 million rows might consume as much space as one with 10 million rows if it has enough dead tuples from updates and deletes.
+{{< callout title="Key insight" >}}
+Your disk usage is driven by the total number of tuple versions, *not* the number of rows you can query. A table with 1 million rows might consume as much space as one with 10 million rows if it has enough dead tuples.
+{{< /callout >}}
 
 But pages alone don't cause bloat. The real culprit is how Postgres handles concurrent users: MVCC.
 
@@ -100,7 +107,18 @@ postgres=# SELECT ctid, xmin, xmax, * FROM users;
 
 Look at the **ctid**: (0,4) means page 0, tuple offset 4. We inserted one row and did three updates—so why is this the *fourth* tuple? Because each UPDATE created a new tuple version. Tuples 1, 2, and 3 are still on disk with xmax values marking them as superseded, but your query doesn't see them; they're dead.
 
-We can see dead tuple count if we check the table statistics:
+Here's what's actually on disk:
+
+```
+Page 0, Tuple 1: [id=1, email='alice@wonderland.com',   xmin=765, xmax=766] ← dead
+Page 0, Tuple 2: [id=1, email='alice@newdomain.com',   xmin=766, xmax=767] ← dead
+Page 0, Tuple 3: [id=1, email='alice@company.com',     xmin=767, xmax=768] ← dead
+Page 0, Tuple 4: [id=1, email='alice@final.com',       xmin=768, xmax=0]   ← current
+```
+
+Each UPDATE created a new tuple and marked the old one as superseded by setting its xmax. The old tuples aren't erased—they're marked dead, waiting for cleanup.
+
+We can see the dead tuple count in the table statistics:
 
 
 ```sql
@@ -158,48 +176,102 @@ postgres=# EXPLAIN (ANALYZE, BUFFERS) SELECT COUNT(*) FROM products;
          Buffers: shared hit=4
 ```
 
-Still reading 4 pages, even though we're only returning 50 rows. The dead tuples are invisible to your query, but Postgres must scan past all of them to find the live ones.
+Still reading 4 pages, even though we're only returning 50 rows. Same I/O cost, but now 90% of that work is wasted scanning dead tuples to find the 50 live ones.
 
-This I/O waste happens because dead tuples remain physically present in pages. To understand exactly how Postgres tracks which tuples are dead and which are alive, let's return to our Alice example and look at what's actually stored on disk.
+The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
 
-Here's what actually happened on disk when we ran those three updates to Alice's email:
+At this point, you might be thinking: if every update creates dead tuples, won't databases just fill up with garbage? Yes - unless something cleans them up. Postgres's answer is **VACUUM**, a background process that reclaims dead tuple space. But VACUUM comes with tradeoffs and quirks you need to understand. Let's see it in action:
 
-```sql
-Page 0, Tuple 1: [id=1, email='alice@example.com',     xmin=1000, xmax=1001] ← dead
-Page 0, Tuple 2: [id=1, email='alice@newdomain.com',   xmin=1001, xmax=1002] ← dead
-Page 0, Tuple 3: [id=1, email='alice@company.com',     xmin=1002, xmax=1003] ← dead
-Page 0, Tuple 4: [id=1, email='alice@final.com',       xmin=1003, xmax=0]    ← current
-```
+### 3. VACUUM
 
-Each UPDATE created a new tuple and marked the old one as superseded by setting its xmax to the updating transaction's ID. The old tuples aren't erased immediately—they're marked as dead, and the space they occupy can be reclaimed and reused for new data.
+VACUUM is Postgres's garbage collector. It scans tables for dead tuples and marks their space as reusable for future inserts and updates.
 
-When you query the table, Postgres scans through the page and checks each tuple's xmin and xmax against your transaction's snapshot to determine which version you should see.
-
-Dead tuples waste space and slow down queries. Even though they won't appear in your results, Postgres must:
-
-* Load pages containing dead tuples from disk into memory
-* Scan past dead tuples to find live ones
-* Check each tuple's visibility (xmin/xmax) against the transaction snapshot
-
-The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem. It's a performance problem. And it's why understanding MVCC is essential to understanding Postgres behavior under write-heavy workloads.
-
-At this point, you might be thinking: if every update creates dead tuples, won't databases just fill up with garbage? Yes - unless something cleans them up. Postgres answer is **VACUUM**, an automated background process that reclaims dead tuples space. But VACUUM comes with tradeoffs and quirks you need to understand. Let's see how it works an where it struggles.
-
-So does Postgres really leave dead tuples on disk forever? No, Postgres has a solution: VACUUM. But it comes with tradeoffs and quirks you need to understand. Let's see it in action right away:
-
-### 3. VACUUM  
-In progress..
+Let's see it clean up our bloated users table:
 
 ```sql
-postgres=# vacuum users;
+postgres=# SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'users';
+ n_live_tup | n_dead_tup
+------------+------------
+          1 |          3
+
+postgres=# VACUUM users;
 VACUUM
+
 postgres=# SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'users';
  n_live_tup | n_dead_tup
 ------------+------------
           1 |          0
 ```
 
-No more dead tuples!
+Three dead tuples gone. But here's the catch:
+
+{{< callout title="Key insight" >}}
+VACUUM doesn't shrink your table file. It marks dead tuple space as reusable *within* existing pages, but those pages stay allocated. Your table is still the same size on disk.
+{{< /callout >}}
+
+```sql
+postgres=# SELECT pg_size_pretty(pg_relation_size('users'));
+ pg_size_pretty
+----------------
+ 8192 bytes
+```
+
+One row, one page (8 KB). The dead tuples are gone, but the space they occupied is now free space inside that page—not returned to the operating system.
+
+#### VACUUM FULL: The Nuclear Option
+
+If you need to actually shrink the table file, there's `VACUUM FULL`. It rewrites the entire table, packing live tuples into fresh pages and releasing unused pages back to the filesystem.
+
+```sql
+postgres=# VACUUM FULL users;
+VACUUM
+```
+
+Sounds great, but there's a cost: **VACUUM FULL locks the table exclusively**. No reads, no writes, nothing—until it finishes. For a large table, this can mean minutes or hours of downtime. In production, you rarely want this.
+
+Regular VACUUM works incrementally alongside your application. VACUUM FULL is a maintenance window operation.
+
+#### Autovacuum: The Background Worker
+
+You don't have to run VACUUM manually. Postgres has **autovacuum**, a background process that monitors tables and vacuums them automatically when dead tuples accumulate past a threshold.
+
+By default, autovacuum triggers when:
+- Dead tuples exceed 20% of live tuples + 50 rows
+
+For a table with 10,000 rows, that's roughly 2,050 dead tuples before autovacuum kicks in.
+
+You can check when autovacuum last ran:
+
+```sql
+postgres=# SELECT relname, last_autovacuum, last_autoanalyze
+           FROM pg_stat_user_tables
+           WHERE relname = 'users';
+ relname |        last_autovacuum        |       last_autoanalyze
+---------+-------------------------------+-------------------------------
+ users   | 2026-02-04 14:32:17.123456+00 | 2026-02-04 14:32:17.234567+00
+```
+
+Autovacuum works well for most workloads. But it has limits.
+
+#### When VACUUM Can't Keep Up
+
+Autovacuum runs in the background, throttled to avoid impacting your queries. Under heavy write loads, dead tuples can accumulate faster than autovacuum cleans them. The result: bloat grows despite autovacuum running.
+
+Common scenarios where this happens:
+
+**High-throughput updates**. A table updated thousands of times per second can outpace the default autovacuum settings. You may need to tune `autovacuum_vacuum_cost_delay` and `autovacuum_vacuum_scale_factor` for hot tables.
+
+**Long-running transactions**. Remember how MVCC keeps old tuple versions for concurrent readers? A transaction that stays open for hours prevents VACUUM from cleaning *any* tuple that transaction might need to see. One forgotten `BEGIN` without a `COMMIT` can bloat your entire database.
+
+```sql
+-- Find long-running transactions
+SELECT pid, age(clock_timestamp(), xact_start), query
+FROM pg_stat_activity
+WHERE state != 'idle'
+ORDER BY xact_start;
+```
+
+**Replica lag with hot standby feedback**. If you're streaming to a replica with `hot_standby_feedback = on`, the replica can hold back the primary's VACUUM. Queries on the replica prevent cleanup on the primary.
 
 
 
