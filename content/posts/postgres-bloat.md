@@ -47,7 +47,7 @@ Here's what actually happens at the physical level:
 
 The result is tuple accumulation. Every update adds storage, every delete leaves behind a dead tuple. A table with frequent updates can accumulate dozens of tuple versions for each logical row, even though only one version is visible to new queries.
 
-But Why not just delete the old versions immediately? Because of concurrent transactions. When one transaction is updating a row, another transaction that started earlier might still be reading the old version. Postgres keeps old tuple versions around until it's certain no transaction needs them anymore. Only then can the space be reclaimed.
+But why not just delete the old versions immediately? Because of concurrent transactions. When one transaction is updating a row, another transaction that started earlier might still be reading the old version. Postgres keeps old tuple versions around until it's certain no transaction needs them anymore. Only then can the space be reclaimed.
 
 These old tuple versions serve a purpose initially—they allow long-running transactions to see a consistent snapshot of the data. But once all transactions that could possibly need them have finished, these tuples become dead tuples: invisible to all queries, yet still consuming space in your pages.
 
@@ -112,7 +112,57 @@ postgres=# SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname 
 
 Three dead tuples from three updates. In a production table with millions of updates per day, this is how real bloat accumulates.
 
-Here's what actually happened on disk when we ran those updates:
+Dead tuples aren't just wasted space, they force Postgres to do unnecessary work. Let's prove it with a bigger example:
+
+```sql
+postgres=# CREATE TABLE products (id INT PRIMARY KEY, name TEXT, price NUMERIC);
+CREATE TABLE
+postgres=# INSERT INTO products SELECT generate_series(1, 500), 'Product', 99.99;
+INSERT 0 500
+
+-- See how many pages we read with a full table
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT COUNT(*) FROM products;
+                                                   QUERY PLAN
+----------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=20.62..20.64 rows=1 width=8) (actual time=0.864..0.881 rows=1.00 loops=1)
+   Buffers: shared hit=4
+   ->  Seq Scan on products  (cost=0.00..18.50 rows=850 width=0) (actual time=0.196..0.332 rows=500.00 loops=1)
+         Buffers: shared hit=4
+```
+
+Note the Buffers: shared hit=4, Postgres read 4 pages to count 500 rows.
+
+Now let's delete 90% of the rows:
+
+
+```sql
+postgres=# DELETE FROM products WHERE id <= 450;
+DELETE 450
+
+postgres=# SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'products';
+ n_live_tup | n_dead_tup
+------------+------------
+         50 |        450
+```
+
+We now have only 50 live rows but 450 dead tuples. Let's run the same query:
+
+```sql
+postgres=# EXPLAIN (ANALYZE, BUFFERS) SELECT COUNT(*) FROM products;
+                                                 QUERY PLAN
+-------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=4.62..4.63 rows=1 width=8) (actual time=0.723..0.771 rows=1.00 loops=1)
+   Buffers: shared hit=4
+   ->  Seq Scan on products  (cost=0.00..4.50 rows=50 width=0) (actual time=0.295..0.321 rows=50.00 loops=1)
+         Buffers: shared hit=4
+```
+
+Still reading 4 pages, even though we're only returning 50 rows. The dead tuples are invisible to your query, but Postgres must scan past all of them to find the live ones.
+
+This I/O waste happens because dead tuples remain physically present in pages. To understand exactly how Postgres tracks which tuples are dead and which are alive, let's return to our Alice example and look at what's actually stored on disk.
+
+Here's what actually happened on disk when we ran those three updates to Alice's email:
 
 ```sql
 Page 0, Tuple 1: [id=1, email='alice@example.com',     xmin=1000, xmax=1001] ← dead
