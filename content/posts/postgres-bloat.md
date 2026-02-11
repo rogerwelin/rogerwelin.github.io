@@ -342,4 +342,18 @@ ORDER BY xact_start;
 Understanding these edge cases is half the battle. VACUUM works well when given the chance, but it needs help: short transactions, tuned thresholds for hot tables, and awareness of replica interactions. With that foundation in place, let's recap what we've learned.
 
 ### 5. Takeaways
+So how worried should you be about bloat? Probably not that much. Bloat is something that comes with Postgres. Bloat is only a problem if it's causing other problems, like bad read latency, high (expensive) disk usage
+or high IOPS. Next question how much bloat is too much? That's a judgment call and it depends on your workload. But the rule of thumb is: the bigger your database the less bloat you should accept. For lage databases > 40-100GB no more that 20% dead tuples
+
+If you do have a large database and issues with bloat the best way to deal with bloated tables is tuning autovacuum:
+* `autovacuum_vacuum_scale_factor` - as previously mentioned, default is 20% and can be set much lower
+* `autovacuum_vacuum_threshold` - default is 50 dead tuples and if you know your workload well you can set `autovacuum_vacuum_scale_factor` to 0 and set this to a higher value
+* `autovacum_max_workers` - default is 3 and can be set to a higher value. Check `pg_stat_progress_vacuum` to see how many autovacuum workers are running. Increase if always at max
+
+
+
+
+
+
+
 

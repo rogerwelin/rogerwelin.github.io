@@ -2,6 +2,7 @@ baseURL = 'https://rogerwelin.github.io/'
 languageCode = 'en-us'
 title = 'Roger Welin'
 theme = 'PaperMod'
+googleAnalytics = 'G-T8Z6QLLEJL'
 
 [params]
   description = "A tech blog where I will post blog posts about Devops, programming, interesting technologies or just various tips and trix"
