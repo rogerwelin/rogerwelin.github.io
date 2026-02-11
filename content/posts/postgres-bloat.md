@@ -1,6 +1,6 @@
 +++
 date = '2026-02-04T22:47:05+01:00'
-draft = true
+draft = false
 title = 'Postgres Bloat'
 +++
 
@@ -180,6 +180,48 @@ Still reading 4 pages, even though we're only returning 50 rows. Same I/O cost, 
 
 The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
 
+
+**Index Bloat**  
+But there is a second, hidden cost to this deletion: **Index Bloat**
+
+Since our products table has a PRIMARY KEY, Postgres automatically created an index for the id column. You might think that when you delete a row, Postgres just "erases" it from the index too. It doesn't. The index entries pointing to dead tuples remain, taking up space.
+
+Let's check the index size right after our initial insert of 500 rows:
+
+```sql
+postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
+ index_size
+------------
+ 32 kB
+```
+
+Now let's check again after deleting 90% of the rows:
+
+```sql
+postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
+ index_size
+------------
+ 32 kB
+```
+
+Still 32 kB - the index hasn't shrunk despite having only 50 rows left. Unlike table bloat index bloat requires `REINDEX` to reclaim space:
+
+```sql
+postgres=# REINDEX INDEX products_pkey;
+REINDEX
+
+postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
+ index_size
+------------
+ 16 kB
+```
+
+The index dropped from 32 kB to 16 kB. `REINDEX` rebuilds the index from scratch, reading only the live tuples from the table.
+
+{{< callout title="Key insight" >}}
+Index bloat requires `REINDEX` to reclaim space. If your queries are slow and you've deleted a lot of rows, check for index bloat with `pg_relation_size()` and rebuild bloated indexes.
+{{< /callout >}}
+
 At this point, you might be thinking: if every update creates dead tuples, won't databases just fill up with garbage? Yes - unless something cleans them up. Postgres's answer is **VACUUM**, a background process that reclaims dead tuple space. But VACUUM comes with tradeoffs and quirks you need to understand. Let's see it in action:
 
 ### 3. VACUUM
@@ -227,9 +269,11 @@ postgres=# VACUUM FULL users;
 VACUUM
 ```
 
-Sounds great, but there's a cost: **VACUUM FULL locks the table exclusively**. No reads, no writes, nothing—until it finishes. For a large table, this can mean minutes or hours of downtime. In production, you rarely want this.
+{{< callout title="Key insight" >}}
+Sounds great, but there's a cost: **VACUUM FULL locks the table exclusively**. No reads, no writes until it finishes. For a large table, this can mean minutes or hours of downtime. In production, you rarely want this.
+Consider VACUUM FULL as a maintenance window operation or consider *pg_repack* for a non-blocking alternative
+{{< /callout >}}
 
-Regular VACUUM works incrementally alongside your application. VACUUM FULL is a maintenance window operation.
 
 #### Autovacuum: The Background Worker
 
@@ -238,7 +282,31 @@ You don't have to run VACUUM manually. Postgres has **autovacuum**, a background
 By default, autovacuum triggers when:
 - Dead tuples exceed 20% of live tuples + 50 rows
 
-For a table with 10,000 rows, that's roughly 2,050 dead tuples before autovacuum kicks in.
+To see this we can query the `pg_settings` table:
+
+```sql
+postgres=# SELECT name, setting
+FROM pg_settings
+WHERE name IN ('autovacuum_vacuum_scale_factor', 'autovacuum_vacuum_threshold');
+              name              | setting
+--------------------------------+---------
+ autovacuum_vacuum_scale_factor | 0.2
+ autovacuum_vacuum_threshold    | 50
+```
+
+For a table with 10,000 rows, that's roughly 2,050 dead tuples before autovacuum kicks in. For a small table 20% is good enough but for a large table you probably want to tune these settings. Here's how to do it:
+
+```sql
+postgres=# ALTER TABLE users SET (
+  autovacuum_vacuum_scale_factor = 0,
+  autovacuum_vacuum_threshold = 50000
+);
+
+-- Check the new settings for that table
+SELECT relname, reloptions 
+FROM pg_class 
+WHERE relname = 'products';
+``` 
 
 You can check when autovacuum last ran:
 
@@ -273,7 +341,7 @@ ORDER BY xact_start;
 
 **Replica lag with hot standby feedback**. If you're streaming to a replica with `hot_standby_feedback = on`, the replica can hold back the primary's VACUUM. Queries on the replica prevent cleanup on the primary.
 
+Understanding these edge cases is half the battle. VACUUM works well when given the chance, but it needs help: short transactions, tuned thresholds for hot tables, and awareness of replica interactions. With that foundation in place, let's recap what we've learned.
 
-
-
+### 4. Takeaways
 
