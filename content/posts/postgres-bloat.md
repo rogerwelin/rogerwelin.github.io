@@ -17,7 +17,9 @@ To understand why it happens we have to follow the lifecycle of a row from the m
 **Table of Contents**
 1. [The Physical Layer: Pages and Tuples](#1-the-physical-layer-pages-and-tuples)
 2. [MVCC and Why Old Data Sticks Around](#2-mvcc-and-why-old-data-sticks-around)
-3. [VACUUM](#3-vacuum)
+3. [Index Bloat](#3-index-bloat)
+4. [VACUUM](#4-vacuum)
+5. [Takeaways](#5-takeaways)
 
 ### 1. The Physical Layer: Pages and Tuples
 Postgres stores tables as files on disk, divided into fixed-size **pages** (8 KB blocks). Inside each page are **tuples** - the physical versions of your rows. See below for a diagram of a Page:
@@ -183,9 +185,11 @@ Still reading 4 pages, even though we're only returning 50 rows. Same I/O cost, 
 
 The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
 
+But tables aren't the only thing that bloats.
 
-**Index Bloat**
-There is a second, hidden cost to this deletion.
+### 3. Index Bloat
+
+There is a second, hidden cost to deletions and updates.
 
 Since our products table has a PRIMARY KEY, Postgres automatically created an index for the id column. You might think that when you delete a row, Postgres just "erases" it from the index too. It doesn't. The index entries pointing to dead tuples remain, taking up space.
 
@@ -218,7 +222,7 @@ Index bloat requires `REINDEX` to reclaim space. If your queries are slow and yo
 
 At this point, you might be thinking: if every update creates dead tuples, won't databases just fill up with garbage? Yes - unless something cleans them up. Postgres's answer is **VACUUM**, a background process that reclaims dead tuple space. But VACUUM comes with tradeoffs and quirks you need to understand. Let's see it in action:
 
-### 3. VACUUM
+### 4. VACUUM
 
 VACUUM is Postgres's garbage collector. It scans tables for dead tuples and marks their space as reusable for future inserts and updates.
 
@@ -337,5 +341,5 @@ ORDER BY xact_start;
 
 Understanding these edge cases is half the battle. VACUUM works well when given the chance, but it needs help: short transactions, tuned thresholds for hot tables, and awareness of replica interactions. With that foundation in place, let's recap what we've learned.
 
-### 4. Takeaways
+### 5. Takeaways
 
