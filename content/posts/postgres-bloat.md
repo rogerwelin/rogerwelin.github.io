@@ -1,6 +1,6 @@
 +++
 date = '2026-02-04T22:47:05+01:00'
-draft = true
+draft = false
 title = 'Postgres Bloat'
 +++
 
@@ -205,7 +205,7 @@ postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_siz
 Still 32 kB - the index hasn't shrunk despite having only 50 rows left. Unlike table bloat, index bloat requires `REINDEX` to reclaim space:
 
 ```sql
-postgres=# REINDEX INDEX products_pkey;
+postgres=# REINDEX INDEX CONCURRENTLY products_pkey;
 REINDEX
 
 postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
@@ -217,7 +217,7 @@ postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_siz
 The index dropped from 32 kB to 16 kB. `REINDEX` rebuilds the index from scratch, reading only the live tuples from the table.
 
 {{< callout title="Key insight" >}}
-Index bloat requires `REINDEX` to reclaim space. If your queries are slow and you've deleted a lot of rows, check for index bloat with `pg_relation_size()` and rebuild bloated indexes.
+Standard `REINDEX` is faster but locks the table entirely, `REINDEX INDEX CONCURRENTLY` allows your application to keep running during the process, though it takes longer to complete
 {{< /callout >}}
 
 At this point, you might be thinking: if every update creates dead tuples, won't databases just fill up with garbage? Yes - unless something cleans them up. Postgres's answer is **VACUUM**, a background process that reclaims dead tuple space. But VACUUM comes with tradeoffs and quirks you need to understand. Let's see it in action:
@@ -343,7 +343,7 @@ Understanding these edge cases is half the battle. VACUUM works well when given 
 
 ### 5. Takeaways
 So how worried should you be about bloat? Probably not that much. Bloat is something that comes with Postgres. Bloat is only a problem if it's causing other problems, like bad read latency, high (expensive) disk usage
-or high IOPS. Next question how much bloat is too much? That's a judgment call and it depends on your workload. But the rule of thumb is: the bigger your database the less bloat you should accept. For lage databases > 40-100GB no more that 20% dead tuples
+or high IOPS. Next question how much bloat is too much? That's a judgment call and it depends on your workload. But the rule of thumb is: the bigger your database the less bloat you should accept. For lage databases > 40-100+ GB no more that 20% dead tuples - you can find out the percentage by [running this query for example](https://github.com/NikolayS/postgres_dba/blob/master/sql/b3_table_pgstattuple.sql)
 
 If you do have a large database and issues with bloat the best way to deal with bloated tables is tuning autovacuum:
 * `autovacuum_vacuum_scale_factor` - as previously mentioned, default is 20% and can be set much lower
