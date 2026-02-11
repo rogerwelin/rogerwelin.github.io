@@ -1,6 +1,6 @@
 +++
 date = '2026-02-04T22:47:05+01:00'
-draft = false
+draft = true
 title = 'Postgres Bloat'
 +++
 
@@ -134,7 +134,10 @@ Dead tuples aren't just wasted space, they force Postgres to do unnecessary work
 
 ```sql
 postgres=# CREATE TABLE products (id INT PRIMARY KEY, name TEXT, price NUMERIC);
-CREATE TABLE
+
+-- Disable autovacuum for this example, we'll get to vacuuming later
+postgres=# ALTER TABLE products SET (autovacuum_enabled = false);
+
 postgres=# INSERT INTO products SELECT generate_series(1, 500), 'Product', 99.99;
 INSERT 0 500
 
@@ -181,12 +184,12 @@ Still reading 4 pages, even though we're only returning 50 rows. Same I/O cost, 
 The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
 
 
-**Index Bloat**  
-But there is a second, hidden cost to this deletion: **Index Bloat**
+**Index Bloat**
+There is a second, hidden cost to this deletion.
 
 Since our products table has a PRIMARY KEY, Postgres automatically created an index for the id column. You might think that when you delete a row, Postgres just "erases" it from the index too. It doesn't. The index entries pointing to dead tuples remain, taking up space.
 
-Let's check the index size right after our initial insert of 500 rows:
+Before the deletion, our index was 32 kB. Let's check what it is now:
 
 ```sql
 postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
@@ -195,16 +198,7 @@ postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_siz
  32 kB
 ```
 
-Now let's check again after deleting 90% of the rows:
-
-```sql
-postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
- index_size
-------------
- 32 kB
-```
-
-Still 32 kB - the index hasn't shrunk despite having only 50 rows left. Unlike table bloat index bloat requires `REINDEX` to reclaim space:
+Still 32 kB - the index hasn't shrunk despite having only 50 rows left. Unlike table bloat, index bloat requires `REINDEX` to reclaim space:
 
 ```sql
 postgres=# REINDEX INDEX products_pkey;
