@@ -65,6 +65,8 @@ This is where bloat emerges. Even though dead tuples won't appear in query resul
 * Scan past them to find live tuples
 * Keep them in your backup dumps
 
+> *To keep things simple, we’re assuming every update always creates a new physical version. In reality, Postgres has clever optimizations (HOT updates) that can avoid this*
+
 #### MVCC in Action
 Let's watch bloat happen in real-time. We'll update a single row multiple times and see what Postgres actually does on disk.
 
@@ -342,17 +344,19 @@ ORDER BY xact_start;
 Understanding these edge cases is half the battle. VACUUM works well when given the chance, but it needs help: short transactions, tuned thresholds for hot tables, and awareness of replica interactions. With that foundation in place, let's recap what we've learned.
 
 ### 5. Takeaways
-So how worried should you be about bloat? Probably not that much. Bloat isn't a flaw; it's a design tradeoff. Bloat is only a problem if it's causing other problems, like bad read latency, high (expensive) disk usage
-or high IOPS. Next question how much bloat is too much? That's a judgment call and it depends on your workload. But the rule of thumb is: the bigger your database the less bloat you should accept. For lage databases > 50-100+ GB no more that ~20% dead tuples - you can find out the percentage by [running this query for example](https://github.com/NikolayS/postgres_dba/blob/master/sql/b3_table_pgstattuple.sql)
+So, how worried should you be about bloat? Probably not that much. Bloat isn't a flaw; it's a fundamental design tradeoff of MVCC. It only becomes a problem when it starts impacting your performance - whether through sluggish read latency, excessive disk costs, or high IOPS.
 
-Next question; how much bloat is too much? That's a judgment call and it depends on your workload. But the rule of thumb is: the bigger your database the less bloat you should accept. For large databases > 40-100GB no more than 20% dead tuples
+**How much bloat is too much?** That’s a judgment call based on your workload, but a good rule of thumb is: the larger the database, the less bloat you should tolerate.
 
-If you do have a large database and issues with bloat the best way to deal with bloated tables is tuning autovacuum:
-* `autovacuum_vacuum_scale_factor` - as previously mentioned, default is 20% and can be set much lower
-* `autovacuum_vacuum_threshold` - default is 50 dead tuples and if you know your workload well you can set `autovacuum_vacuum_scale_factor` to 0 and set this to a higher value
-* `autovacuum_max_workers` - default is 3 and can be set to a higher value. Check `pg_stat_progress_vacuum` to see how many autovacuum workers are running. Increase if always at max
+* For small databases: 30%–50% bloat is often negligible.
+* For large databases (50–100+ GB): You generally want to keep dead tuples below 20%. You can find your specific percentage by running [this query](https://github.com/NikolayS/postgres_dba/blob/master/sql/b3_table_pgstattuple.sql).
 
-Your database will keep growing. Now you know why and what to do about it.
+If you do find yourself battling significant bloat, your first line of defense is tuning autovacuum to be more aggressive:
 
+* `autovacuum_vacuum_scale_factor` - The default is 20%. For high-traffic tables, consider dropping this lower so cleanup triggers sooner
+* `autovacuum_vacuum_threshold` - The default is 50 dead tuples and if you know your workload well you can set `autovacuum_vacuum_scale_factor` to 0 and set this to a higher value
+* `autovacuum_max_workers` - The default is 3. If pg_stat_progress_vacuum shows your workers are constantly at max capacity, consider increasing this, just remember that workers share the `autovacuum_vacuum_cost_limit`
+
+Your database will keep growing as long as you're writing data. Now you understand the *why* behind the growth and have the tools to keep it under control.
 
 
