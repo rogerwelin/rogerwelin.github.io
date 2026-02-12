@@ -1,5 +1,5 @@
 +++
-date = '2026-02-011T22:47:05+01:00'
+date = '2026-02-11T22:47:05+01:00'
 draft = false
 title = 'PostgreSQL Bloat Explained'
 +++
