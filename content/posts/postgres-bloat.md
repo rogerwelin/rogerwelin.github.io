@@ -195,7 +195,19 @@ There is a second, hidden cost to deletions and updates.
 
 Since our products table has a PRIMARY KEY, Postgres automatically created an index for the id column. You might think that when you delete a row, Postgres just "erases" it from the index too. It doesn't. The index entries pointing to dead tuples remain, taking up space.
 
-Before the deletion, our index was 32 kB. Let's check what it is now:
+Let's check. We deleted 450 rows earlier, leaving only 50 live rows. How many entries are in the index?
+
+```sql
+postgres=# CREATE EXTENSION pageinspect;
+
+postgres=# SELECT COUNT(*) FROM bt_page_items('products_pkey', 1);
+ count
+-------
+   500
+```
+
+Still 500 entries for 50 rows! The index entries pointing to dead tuples remain, taking up space. Let's see the cost:
+
 
 ```sql
 postgres=# SELECT pg_size_pretty(pg_relation_size('products_pkey')) AS index_size;
