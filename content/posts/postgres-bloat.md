@@ -187,6 +187,28 @@ Still reading 4 pages, even though we're only returning 50 rows. Same I/O cost, 
 
 The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
 
+#### Measuring Bloat
+
+Want exact numbers? The `pgstattuple` extension gives you precise bloat statistics:
+
+```sql
+postgres=# CREATE EXTENSION pgstattuple;
+
+postgres=# SELECT * FROM pgstattuple('products');
+-[ RECORD 1 ]------+------
+table_len          | 32768
+tuple_count        | 50
+tuple_len          | 2150
+tuple_percent      | 6.56
+dead_tuple_count   | 450
+dead_tuple_len     | 19350
+dead_tuple_percent | 59.05
+free_space         | 6672
+free_percent       | 20.36
+```
+
+The `dead_tuple_percent` tells you exactly how much of your table is garbage. In this case, nearly 60% of the table is dead tuples.
+
 But tables aren't the only thing that bloats.
 
 ### 3. Index Bloat
@@ -350,8 +372,6 @@ FROM pg_stat_activity
 WHERE state != 'idle'
 ORDER BY xact_start;
 ```
-
-**Replica lag with hot standby feedback**. If you're streaming to a replica with `hot_standby_feedback = on`, the replica can hold back the primary's VACUUM. Queries on the replica prevent cleanup on the primary.
 
 Understanding these edge cases is half the battle. VACUUM works well when given the chance, but it needs help: short transactions, tuned thresholds for hot tables, and awareness of replica interactions. With that foundation in place, let's recap what we've learned.
 
