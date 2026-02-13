@@ -8,14 +8,6 @@ googleAnalytics = 'G-T8Z6QLLEJL'
   description = "A tech blog where I will post blog posts about Devops, programming, interesting technologies or just various tips and trix"
   author = "Roger Welin"
   email = "roger.welin@icloud.com"
-
-  # Favicon settings - only use favicon.ico
-  [params.assets]
-    favicon = "favicon.ico"
-    favicon16x16 = "favicon.ico"
-    favicon32x32 = "favicon.ico"
-    apple_touch_icon = "favicon.ico"
-
   # PaperMod settings
   ShowReadingTime = true
   ShowShareButtons = false
@@ -27,11 +19,17 @@ googleAnalytics = 'G-T8Z6QLLEJL'
   UseHugoToc = true
   disableSpecial1stPost = false
   disableScrollToTop = false
-  comments = false
+  comments = true
   hidemeta = false
   hideSummary = false
   showtoc = false
   tocopen = false
+
+[params.assets]
+  favicon = "favicon.ico"
+  favicon16x16 = "favicon.ico"
+  favicon32x32 = "favicon.ico"
+  apple_touch_icon = "favicon.ico"
 
   [params.homeInfoParams]
     Title = "Roger Welin"

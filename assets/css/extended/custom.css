@@ -56,3 +56,8 @@
 .light .callout-body em {
   color: #000;
 }
+
+/* Post navigation links */
+.paginav {
+  font-size: 0.9rem;
+}
