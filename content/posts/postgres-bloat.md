@@ -30,7 +30,7 @@ Think of a page like a box with limited capacity. When you insert a row, Postgre
 
 This page-based architecture has critical implications for how bloat develops:
 
-**Pages are the unit of I/O**. Postgres doesn't read individual rows—it reads entire 8 KB pages. Even if only one live tuple remains in a page, Postgres must load the full page into memory and scan past any dead tuples to find it
+**Pages are the unit of I/O**. Postgres doesn't read individual rows, it reads entire 8 KB pages. Even if only one live tuple remains in a page, Postgres must load the full page into memory and scan past any dead tuples to find it
 
 **Pages don't shrink**. Once a page is allocated to a table, it stays part of that table file. Deleting rows frees space *within* pages but doesn't return pages to the filesystem. Your table file can only grow or stay the same size through normal operations.
 
@@ -58,7 +58,7 @@ The result is tuple accumulation. Every update adds storage, every delete leaves
 
 But why not just delete the old versions immediately? Because of concurrent transactions. When one transaction is updating a row, another transaction that started earlier might still be reading the old version. Postgres keeps old tuple versions around until it's certain no transaction needs them anymore. Only then can the space be reclaimed.
 
-These old tuple versions serve a purpose initially—they allow long-running transactions to see a consistent snapshot of the data. But once all transactions that could possibly need them have finished, these tuples become dead tuples: invisible to all queries, yet still consuming space in your pages.
+These old tuple versions serve a purpose initially - they allow long-running transactions to see a consistent snapshot of the data. But once all transactions that could possibly need them have finished, these tuples become dead tuples: invisible to all queries, yet still consuming space in your pages.
 
 This is where bloat emerges. Even though dead tuples won't appear in query results, Postgres still has to:
 * Load their pages from disk into memory
@@ -109,7 +109,7 @@ postgres=# SELECT ctid, xmin, xmax, * FROM users;
  (0,4) |  768 |    0 |  1 | Alice | alice@final.com
 ```
 
-Look at the **ctid**: (0,4) means page 0, tuple offset 4. We inserted one row and did three updates—so why is this the *fourth* tuple? Because each UPDATE created a new tuple version. Tuples 1, 2, and 3 are still on disk with xmax values marking them as superseded, but your query doesn't see them; they're dead.
+Look at the **ctid**: (0,4) means page 0, tuple offset 4. We inserted one row and did three updates, so why is this the *fourth* tuple? Because each UPDATE created a new tuple version. Tuples 1, 2, and 3 are still on disk with xmax values marking them as superseded, but your query doesn't see them; they're dead.
 
 Here's what's actually on disk:
 
@@ -120,7 +120,7 @@ Page 0, Tuple 3: [id=1, email='alice@company.com',     xmin=767, xmax=768] ← d
 Page 0, Tuple 4: [id=1, email='alice@final.com',       xmin=768, xmax=0]   ← current
 ```
 
-Each UPDATE created a new tuple and marked the old one as superseded by setting its xmax. The old tuples aren't erased—they're marked dead, waiting for cleanup.
+Each UPDATE created a new tuple and marked the old one as superseded by setting its xmax. The old tuples aren't erased, they're marked dead, waiting for cleanup.
 
 We can see the dead tuple count in the table statistics:
 
@@ -185,7 +185,7 @@ postgres=# EXPLAIN (ANALYZE, BUFFERS) SELECT COUNT(*) FROM products;
 
 Still reading 4 pages, even though we're only returning 50 rows. Same I/O cost, but now 90% of that work is wasted scanning dead tuples to find the 50 live ones.
 
-The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples—you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
+The more dead tuples per page, the more wasted I/O and CPU. A heavily bloated table might have pages that are 80% dead tuples, you're reading 5x more data than necessary. This is why bloat isn't just a disk space problem; it's a performance problem.
 
 #### Measuring Bloat
 
@@ -292,7 +292,7 @@ postgres=# SELECT pg_size_pretty(pg_relation_size('users'));
  8192 bytes
 ```
 
-One row, one page (8 KB). The dead tuples are gone, but the space they occupied is now free space inside that page—not returned to the operating system.
+One row, one page (8 KB). The dead tuples are gone, but the space they occupied is now free space inside that page, not returned to the operating system.
 
 #### VACUUM FULL: The Nuclear Option
 
