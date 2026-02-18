@@ -61,3 +61,79 @@
 .paginav {
   font-size: 0.9rem;
 }
+
+/* Terminal-style code blocks (iTerm2 look) */
+.post-content .highlight {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 10px;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Terminal title bar */
+.post-content .highlight::before {
+  content: "";
+  display: block;
+  height: 32px;
+  background: linear-gradient(180deg, #3d3d3d 0%, #323232 100%);
+  border-bottom: 1px solid #1a1a1a;
+  border-radius: 10px 10px 0 0;
+}
+
+/* Window control dots (red, yellow, green) */
+.post-content .highlight::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  width: 12px;
+  height: 12px;
+  background: #ff5f56;
+  border-radius: 50%;
+  box-shadow:
+    20px 0 0 #ffbd2e,
+    40px 0 0 #27ca40;
+}
+
+/* Code block inside terminal */
+.post-content .highlight pre {
+  margin: 0;
+  padding: 1rem;
+  background: #1e1e1e !important;
+  border-radius: 0 0 10px 10px;
+  overflow-x: auto;
+}
+
+.post-content .highlight pre code {
+  background: transparent !important;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Scrollbar styling for terminal */
+.post-content .highlight pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.post-content .highlight pre::-webkit-scrollbar-track {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.post-content .highlight pre::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.post-content .highlight pre::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Light theme terminal (optional - keeps it dark for authenticity) */
+.light .post-content .highlight {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
