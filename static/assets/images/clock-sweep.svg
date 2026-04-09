@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 520" width="500" height="520">
+  <style>
+    text { font-family: 'Courier New', monospace; }
+    .title { font-size: 16px; font-weight: bold; fill: #e6e6e6; }
+    .label { font-size: 11px; fill: #c0c0c0; }
+    .slot-label { font-size: 10px; fill: #888; }
+    .bit-text { font-size: 14px; font-weight: bold; }
+    .page-text { font-size: 9px; fill: #aaa; }
+    .legend { font-size: 11px; fill: #b0b0b0; }
+  </style>
+
+  <!-- Background -->
+  <rect width="500" height="520" rx="12" fill="#1e1e1e"/>
+
+  <!-- Title -->
+  <text x="250" y="32" text-anchor="middle" class="title">Clock-Sweep Buffer Eviction</text>
+
+  <!-- Main circle (buffer pool ring) -->
+  <circle cx="250" cy="250" r="150" fill="none" stroke="#333" stroke-width="2"/>
+
+  <!-- 8 buffer slots around the circle -->
+  <!-- Slot 0 (top) - angle 0 = 12 o'clock -->
+  <circle cx="250" cy="100" r="28" fill="#2a4a2a" stroke="#4ec94e" stroke-width="2">
+    <animate attributeName="fill" values="#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a" dur="16s" repeatCount="indefinite"/>
+    <animate attributeName="stroke" values="#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e" dur="16s" repeatCount="indefinite"/>
+  </circle>
+  <text x="250" y="97" text-anchor="middle" class="bit-text" fill="#4ec94e">
+    <animate attributeName="fill" values="#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e" dur="16s" repeatCount="indefinite"/>
+    1
+  </text>
+  <text x="250" y="110" text-anchor="middle" class="page-text">users p0</text>
+
+  <!-- Slot 1 (top-right) - angle 45 -->
+  <circle cx="356" cy="144" r="28" fill="#4a3a1a" stroke="#e8a735" stroke-width="2">
+    <animate attributeName="fill" values="#4a3a1a;#4a3a1a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#2a4a2a;#4a3a1a" dur="16s" repeatCount="indefinite"/>
+    <animate attributeName="stroke" values="#e8a735;#e8a735;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#e8a735" dur="16s" repeatCount="indefinite"/>
+  </circle>
+  <text x="356" y="141" text-anchor="middle" class="bit-text" fill="#e8a735">
+    <animate attributeName="fill" values="#e8a735;#e8a735;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#4ec94e;#e8a735" dur="16s" repeatCount="indefinite"/>
+    <animate values="0;0;1;1;1;1;1;1;1;0" dur="16s" repeatCount="indefinite" attributeName="textContent" attributeType="XML"/>0
+  </text>
+  <text x="356" y="154" text-anchor="middle" class="page-text">idx p3</text>
+
+  <!-- Slot 2 (right) - angle 90 -->
+  <circle cx="400" cy="250" r="28" fill="#2a4a2a" stroke="#4ec94e" stroke-width="2"/>
+  <text x="400" y="247" text-anchor="middle" class="bit-text" fill="#4ec94e">1</text>
+  <text x="400" y="260" text-anchor="middle" class="page-text">users p2</text>
+
+  <!-- Slot 3 (bottom-right) - angle 135 -->
+  <circle cx="356" cy="356" r="28" fill="#4a3a1a" stroke="#e8a735" stroke-width="2">
+    <animate attributeName="fill" values="#4a3a1a;#4a3a1a;#4a3a1a;#4a3a1a;#4a1a1a;#4a1a1a;#2a3a4a;#2a3a4a;#2a3a4a;#2a3a4a" dur="16s" repeatCount="indefinite"/>
+    <animate attributeName="stroke" values="#e8a735;#e8a735;#e8a735;#e8a735;#e05555;#e05555;#5599dd;#5599dd;#5599dd;#5599dd" dur="16s" repeatCount="indefinite"/>
+  </circle>
+  <text x="356" y="353" text-anchor="middle" class="bit-text" fill="#e8a735">
+    <animate attributeName="fill" values="#e8a735;#e8a735;#e8a735;#e8a735;#e05555;#e05555;#5599dd;#5599dd;#5599dd;#5599dd" dur="16s" repeatCount="indefinite"/>0
+  </text>
+  <text x="356" y="366" text-anchor="middle" class="page-text">
+    <animate attributeName="fill" values="#aaa;#aaa;#aaa;#aaa;#e05555;#e05555;#aaa;#aaa;#aaa;#aaa" dur="16s" repeatCount="indefinite"/>orders p1
+  </text>
+
+  <!-- Slot 4 (bottom) - angle 180 -->
+  <circle cx="250" cy="400" r="28" fill="#2a4a2a" stroke="#4ec94e" stroke-width="2"/>
+  <text x="250" y="397" text-anchor="middle" class="bit-text" fill="#4ec94e">1</text>
+  <text x="250" y="410" text-anchor="middle" class="page-text">users p1</text>
+
+  <!-- Slot 5 (bottom-left) - angle 225 -->
+  <circle cx="144" cy="356" r="28" fill="#2a4a2a" stroke="#4ec94e" stroke-width="2"/>
+  <text x="144" y="353" text-anchor="middle" class="bit-text" fill="#4ec94e">1</text>
+  <text x="144" y="366" text-anchor="middle" class="page-text">products p0</text>
+
+  <!-- Slot 6 (left) - angle 270 -->
+  <circle cx="100" cy="250" r="28" fill="#4a3a1a" stroke="#e8a735" stroke-width="2"/>
+  <text x="100" y="247" text-anchor="middle" class="bit-text" fill="#e8a735">0</text>
+  <text x="100" y="260" text-anchor="middle" class="page-text">idx p1</text>
+
+  <!-- Slot 7 (top-left) - angle 315 -->
+  <circle cx="144" cy="144" r="28" fill="#2a4a2a" stroke="#4ec94e" stroke-width="2"/>
+  <text x="144" y="141" text-anchor="middle" class="bit-text" fill="#4ec94e">1</text>
+  <text x="144" y="154" text-anchor="middle" class="page-text">idx p2</text>
+
+  <!-- Clock hand - rotates around the circle -->
+  <g>
+    <animateTransform attributeName="transform" type="rotate"
+      values="0 250 250;0 250 250;45 250 250;45 250 250;90 250 250;135 250 250;135 250 250;135 250 250;135 250 250;0 250 250"
+      dur="16s" repeatCount="indefinite"/>
+    <!-- Hand line -->
+    <line x1="250" y1="250" x2="250" y2="128" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+    <!-- Hand center dot -->
+    <circle cx="250" cy="250" r="6" fill="#ff6b6b"/>
+    <!-- Hand arrow tip -->
+    <polygon points="250,128 243,142 257,142" fill="#ff6b6b"/>
+  </g>
+
+  <!-- Status text area -->
+  <rect x="40" y="448" width="420" height="28" rx="6" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+  <text x="250" y="467" text-anchor="middle" class="label">
+    <animate attributeName="fill" values="#c0c0c0;#c0c0c0;#e8a735;#c0c0c0;#c0c0c0;#e05555;#5599dd;#c0c0c0;#c0c0c0;#c0c0c0" dur="16s" repeatCount="indefinite"/>
+    <set attributeName="textContent" to="▶ Scanning... bit=1, skip" begin="0s" dur="1s"/>
+    <set attributeName="textContent" to="▶ Scanning... bit=1, skip" begin="0s"/>
+  </text>
+
+  <!-- Animated status messages overlaid -->
+  <text x="250" y="467" text-anchor="middle" class="label" fill="#c0c0c0">
+    <animate attributeName="opacity" values="1;0;0;0;0;0;0;0;0;1" dur="16s" repeatCount="indefinite"/>▶ Scanning slot 0: bit=1, keep (recently used)
+  </text>
+  <text x="250" y="467" text-anchor="middle" class="label" fill="#e8a735">
+    <animate attributeName="opacity" values="0;1;1;0;0;0;0;0;0;0" dur="16s" repeatCount="indefinite"/>▶ Slot 1: bit=0 → decrement, second chance
+  </text>
+  <text x="250" y="467" text-anchor="middle" class="label" fill="#c0c0c0">
+    <animate attributeName="opacity" values="0;0;0;1;0;0;0;0;0;0" dur="16s" repeatCount="indefinite"/>▶ Scanning slot 2: bit=1, keep (recently used)
+  </text>
+  <text x="250" y="467" text-anchor="middle" class="label" fill="#e05555">
+    <animate attributeName="opacity" values="0;0;0;0;1;1;0;0;0;0" dur="16s" repeatCount="indefinite"/>▶ Slot 3: bit=0 → EVICT! Page removed from cache
+  </text>
+  <text x="250" y="467" text-anchor="middle" class="label" fill="#5599dd">
+    <animate attributeName="opacity" values="0;0;0;0;0;0;1;1;1;0" dur="16s" repeatCount="indefinite"/>▶ Slot 3: new page loaded into freed slot
+  </text>
+
+  <!-- Legend -->
+  <circle cx="60" cy="500" r="8" fill="#2a4a2a" stroke="#4ec94e" stroke-width="1.5"/>
+  <text x="73" y="504" class="legend">bit=1 (recently used)</text>
+  <circle cx="220" cy="500" r="8" fill="#4a3a1a" stroke="#e8a735" stroke-width="1.5"/>
+  <text x="233" y="504" class="legend">bit=0 (candidate)</text>
+  <circle cx="370" cy="500" r="8" fill="#4a1a1a" stroke="#e05555" stroke-width="1.5"/>
+  <text x="383" y="504" class="legend">evicted</text>
+</svg>
